@@ -1,0 +1,3 @@
+export const DAILY_FEEDING_MINUTES_CAP = 50;
+export const MINUTES_PER_APPLE = 25;
+export const MAX_APPLES_PER_FEEDING_DAY = 2;

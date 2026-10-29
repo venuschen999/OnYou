@@ -1,0 +1,31 @@
+#	Sprint	Issue	Story	Owner	Depends on
+1	Sprint 1	Project scaffold: Next.js, TypeScript, Tailwind, ESLint, Prettier, initial AGENTS.md	Setup	A	—
+2	Sprint 1	CI pipeline: lint, type check, unit and integration tests with a Postgres service	Setup	B	1
+3	Sprint 1	Vercel and Neon: preview deployments, environments, production deploy	Setup	B	1
+4	Sprint 1	Security scanning: CodeQL, npm audit, Dependabot	Setup	B	2
+5	Sprint 1	Prisma schema and first migration: users, pets, sessions with lastHeartbeatAt, daily feeding; partial unique index for one active session	Setup	A	1
+6	Sprint 1	Playwright setup and a smoke E2E test in CI	Setup	A	2, 3
+7	Sprint 1	OpenAPI skeleton and Swagger UI route including heartbeat	Setup	B	1
+8	Sprint 1	Signup and login API: bcrypt, JWT in HttpOnly cookie, Zod validation, timezone at signup	US1	A	5
+9	Sprint 1	Auth screens and protected routes	US1	A	8
+10	Sprint 1	Default pet Mochi created at signup; rename pet API and settings UI	US3	A	8
+11	Sprint 1	Reward calculation module: coins, apples, feeding minutes, daily cap, feeding day by timezone	US6	A	5
+12	Sprint 1	Start session API: one active session, first heartbeat, no completion token	US5	B	5, 8
+13	Sprint 1	Focus screen: task input, durations, countdown, heartbeats, refresh restore, connection warning	US5	B	12, 14
+14	Sprint 1	Heartbeat API and presence-deadline resolution (account-owned sessions; 10s heartbeat; 30s grace)	US5	B	12
+15	Sprint 1	Completion endpoint: presence and end-time checks, exactly-once rewards in a transaction	US6	B	11, 12, 14
+16	Sprint 1	Result screen showing coins, feeding minutes, and apples earned	US6	B	15
+17	Sprint 1	Give up: confirmation, abandon API from any tab, slap animation, presence-aware already-ended case	US7	A	12, 13, 14
+18	Sprint 1	Logout during an active session: confirmation, abandon on all devices	US1	A	9, 17
+19	Sprint 2	Feeding progress API: pet name, coins, today's apples, feeding minutes, state, daily reset by timezone	US4	A	11, 15
+20	Sprint 2	Dashboard UI with a distinct pet image or animation for Starving, Hungry, and Full; active session bar	US4	B	19
+21	Sprint 2	Midnight crossing and late resolution: credit on the scheduled completion day	US4	A	11, 15
+22	Sprint 2	History API: newest first, 20 per page, ownership checks	US8	B	15, 17
+23	Sprint 2	History screen: entries, empty state, Load more, end-of-list note	US8	B	22
+24	Sprint 2	Password reset request: Resend email, hashed single-use tokens, same response for unknown emails, rate limiting	US2	A	8
+25	Sprint 2	Reset password screen; token version update signs out existing sessions	US2	A	24
+26	Sprint 2	Full-loop E2E tests: sign up, focus, complete, give up, multi-tab, history	Testing	B	16, 17, 23, 14
+27	Sprint 2	Complete OpenAPI documentation for all endpoints including heartbeat	Docs	B	7, 22, 25, 14
+28	Sprint 2	Architecture and database schema diagrams	Docs	A	5
+29	Sprint 2	README and setup/deployment guide	Docs	B	3
+30	Sprint 2	Accessibility and responsive pass: labels, focus states, contrast, loading/error/empty states	Polish	A	20, 23

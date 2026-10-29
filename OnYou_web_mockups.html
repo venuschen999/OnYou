@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OnYou web mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2E8; --chrome:#DCE4D5; --frame:#FBFCF8; --surface:#FFFFFF; --ink:#1D2A23; --muted:#56645B;
+  --line:#D3DCCD; --pine:#2E6A4E; --pine-ink:#FFFFFF; --apple:#C93A2E; --leaf:#4F8F31;
+  --plum:#7E3352; --peach:#F3D2B3; --peach-dark:#C99671; --tint:#E2ECDA; --scrim:rgba(20,32,25,.45);
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1712; --chrome:#0A110D; --frame:#16211B; --surface:#1C2A22; --ink:#E4EEE2; --muted:#A1B1A6;
+    --line:#2D3D34; --pine:#73BC95; --pine-ink:#0D1A12; --apple:#E85A4C; --leaf:#80BC5E;
+    --plum:#D683A3; --peach:#EBC6A4; --peach-dark:#C08D66; --tint:#22342A; --scrim:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1712; --chrome:#0A110D; --frame:#16211B; --surface:#1C2A22; --ink:#E4EEE2; --muted:#A1B1A6;
+  --line:#2D3D34; --pine:#73BC95; --pine-ink:#0D1A12; --apple:#E85A4C; --leaf:#80BC5E;
+  --plum:#D683A3; --peach:#EBC6A4; --peach-dark:#C08D66; --tint:#22342A; --scrim:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Recursive", ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-variation-settings:"CASL" .5;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pine);outline-offset:2px}
+
+/* Page shell */
+.page{max-width:1120px;margin:0 auto;padding:40px 20px 80px}
+.intro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:center;margin-bottom:56px}
+.intro h1{font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.05;margin:0 0 12px;font-weight:800;font-variation-settings:"CASL" 1;letter-spacing:-.01em}
+.intro p{margin:0 0 8px;max-width:58ch;color:var(--muted)}
+.hero-pet{display:flex;flex-direction:column;align-items:center;gap:12px}
+.hero-pet .pet{width:220px}
+.state-toggle{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.state-toggle button{border:0;background:transparent;padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:600}
+.state-toggle button[aria-pressed="true"]{background:var(--pine);color:var(--pine-ink)}
+.hero-caption{font-size:.95rem;color:var(--muted);min-height:1.5em;text-align:center;max-width:30ch}
+@media (max-width:720px){.intro{grid-template-columns:1fr}.hero-pet{order:-1}}
+
+section.flow{margin-bottom:64px}
+.flow h2{font-size:1.6rem;margin:0 0 4px;font-variation-settings:"CASL" 1;font-weight:750}
+.flow > p{margin:0 0 24px;color:var(--muted);max-width:70ch}
+.shots{display:flex;flex-direction:column;gap:40px}
+figure{margin:0}
+figcaption{margin-top:10px;font-size:.92rem;display:flex;justify-content:space-between;gap:12px;max-width:1040px}
+figcaption span:last-child{color:var(--muted)}
+
+/* Browser window, scaled to fit narrow screens */
+.pair{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+@media (max-width:860px){.pair{grid-template-columns:1fr}.pair .viewport.m{justify-self:center;width:min(100%,320px)}}
+.viewport{width:100%;max-width:1040px;overflow:hidden}
+.viewport.m{max-width:390px}
+.label{font-size:.82rem;color:var(--muted);margin:0 0 6px}
+.browser{
+  width:1040px;height:680px;transform-origin:0 0;
+  border-radius:14px;overflow:hidden;border:1px solid var(--line);
+  background:var(--frame);display:flex;flex-direction:column;
+}
+.browser.phone{width:390px;height:820px;border-radius:38px}
+.browser.phone .chrome{display:none}
+.chrome{height:40px;flex:0 0 40px;background:var(--chrome);display:flex;align-items:flex-end;gap:4px;padding:0 12px}
+.tab{height:32px;padding:0 16px;border-radius:10px 10px 0 0;display:inline-flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);min-width:170px}
+.tab.on{background:var(--frame);color:var(--ink)}
+.app{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;container:app / inline-size}
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:18px 48px;border-bottom:1px solid var(--line)}
+.wordmark{font-weight:850;font-size:1.25rem;font-variation-settings:"CASL" 1}
+.nav{display:flex;gap:32px;font-size:.95rem}
+.nav a{color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700;border-bottom-color:var(--pine)}
+.main{flex:1;min-height:0;padding:40px 64px;display:flex;flex-direction:column}
+.main.center{justify-content:center}
+
+h3.title{font-size:1.75rem;line-height:1.15;margin:0;font-weight:780;font-variation-settings:"CASL" 1}
+.sub{margin:0;color:var(--muted);font-size:.98rem;max-width:52ch}
+
+/* Controls */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:650;font-size:.92rem}
+.field input{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px}
+.field input[aria-invalid="true"]{border-color:var(--plum)}
+.field input[readonly]{background:transparent;color:var(--muted)}
+.hint{font-size:.84rem;color:var(--muted)}
+.error{font-size:.88rem;color:var(--plum);font-weight:600;margin:0}
+.btn{border:0;border-radius:14px;padding:13px 22px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}
+.btn.block{display:block;width:100%}
+.btn.primary{background:var(--pine);color:var(--pine-ink)}
+.btn.secondary{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.danger{background:transparent;border:1.5px solid var(--plum);color:var(--plum)}
+.link{color:var(--pine);font-weight:650;text-decoration:none;font-size:.92rem}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* Auth split */
+.split{display:grid;grid-template-columns:1fr 1fr;height:100%}
+.split .art{background:var(--tint);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:48px;text-align:center}
+.split .art .wordmark{position:absolute;top:28px;left:36px}
+.split .art .pet{width:250px}
+.split .art p{margin:0;font-size:1.15rem;font-weight:650;font-variation-settings:"CASL" 1;max-width:24ch}
+.formside{display:flex;flex-direction:column;justify-content:center;padding:48px 80px}
+.form{display:flex;flex-direction:column;gap:16px;max-width:380px;width:100%}
+.form .foot{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+
+/* Pet card */
+.petcard{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.petcard .pet{width:220px}
+.petcard.small .pet{width:170px}
+.petname{font-size:1.4rem;font-weight:780;font-variation-settings:"CASL" 1;margin:0}
+.state-label{font-size:.9rem;font-weight:700;padding:3px 12px;border-radius:999px;background:var(--tint)}
+.state-label.starving{color:var(--plum)}
+.state-label.hungry{color:var(--ink)}
+.state-label.full{color:var(--pine)}
+
+/* Dashboard */
+.dash{display:grid;grid-template-columns:380px 1fr;gap:48px;max-width:900px;width:100%;margin:auto}
+.dash .side{display:flex;flex-direction:column;justify-content:center;gap:22px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.stat .k{font-size:.84rem;color:var(--muted)}
+.stat .v{font-size:1.5rem;font-weight:750;display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.apples{display:flex;gap:6px}
+.progress{height:8px;background:var(--tint);border-radius:999px;overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;background:var(--apple);border-radius:999px}
+.progress-text{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+/* Duration picker */
+.durations{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border:0;padding:0;margin:0}
+.durations legend{font-weight:650;font-size:.92rem;margin-bottom:6px;padding:0}
+.durations label{border:1.5px solid var(--line);border-radius:14px;padding:14px 6px;text-align:center;background:var(--surface);cursor:pointer;position:relative}
+.durations input{position:absolute;opacity:0;pointer-events:none}
+.durations label:has(input:checked){border-color:var(--pine);background:var(--tint)}
+.durations label:has(input:focus-visible){outline:3px solid var(--pine);outline-offset:2px}
+.durations b{display:block;font-size:1.5rem;font-variation-settings:"MONO" 1}
+.durations small{color:var(--muted)}
+.setup{display:grid;grid-template-columns:1fr 300px;gap:56px;max-width:900px;width:100%;margin:auto;align-items:center}
+.setup .form{max-width:none;gap:20px}
+
+/* Focus */
+.run{display:grid;grid-template-columns:320px 1fr;gap:64px;align-items:center;max-width:860px;width:100%;margin:auto}
+.ringwrap{position:relative;width:320px;height:320px}
+.ringwrap svg.ring{position:absolute;inset:0}
+.ringwrap .pet{position:absolute;width:190px;left:65px;top:68px}
+.run .info{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.countdown{font-variation-settings:"MONO" 1,"CASL" 0;font-weight:700;font-size:6rem;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.task{margin:0;font-weight:700;font-size:1.25rem}
+.meta{color:var(--muted);font-size:.95rem;margin:0}
+.run .info .btn{margin-top:14px}
+.banner{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1.5px solid var(--plum);border-radius:16px;padding:12px 16px;margin:0 auto;max-width:860px;width:100%}
+.banner b{color:var(--plum)}
+.banner p{margin:0;font-size:.94rem}
+
+/* Dialog */
+.scrim{position:absolute;inset:0;background:var(--scrim);display:flex;align-items:center;justify-content:center}
+.dialog{background:var(--frame);width:460px;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
+.dialog .actions{justify-content:flex-end;margin-top:6px}
+
+/* Results */
+.result{display:grid;grid-template-columns:300px 1fr;gap:56px;align-items:center;max-width:860px;width:100%;margin:auto}
+.result .side{display:flex;flex-direction:column;gap:16px}
+.rewards{display:grid;grid-template-columns:repeat(3,140px);gap:12px}
+.reward{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;text-align:center}
+.reward b{display:block;font-size:1.8rem;font-variation-settings:"MONO" 1}
+.reward span{font-size:.85rem;color:var(--muted)}
+.reward.none b{color:var(--muted)}
+
+/* History */
+.htable{width:100%;border-collapse:collapse;margin-top:18px;font-size:.95rem}
+.htable th{text-align:left;font-weight:600;color:var(--muted);font-size:.85rem;padding:0 16px 10px;border-bottom:1px solid var(--line)}
+.htable td{padding:13px 16px;border-bottom:1px solid var(--line)}
+.htable td:first-child{font-weight:650}
+.htable .num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{font-size:.78rem;font-weight:700;border-radius:999px;padding:3px 10px;display:inline-block}
+.badge.ok{background:var(--tint);color:var(--pine)}
+.badge.no{border:1px solid var(--plum);color:var(--plum)}
+.more{margin-top:18px;align-self:center}
+
+/* Empty + settings */
+.empty{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;margin:auto}
+.empty .pet{width:180px}
+.settings{max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.group{display:flex;flex-direction:column;gap:14px;padding-top:22px;border-top:1px solid var(--line)}
+.group h4{margin:0;font-size:1.05rem}
+.inline{display:flex;gap:12px;align-items:flex-start}
+.inline .field{flex:1}
+.inline .btn{margin-top:27px}
+
+/* States added for loading, errors, success, and active sessions */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ok{font-size:.88rem;color:var(--pine);font-weight:600;margin:0}
+.note{background:var(--surface);border:1.5px solid var(--pine);border-radius:14px;padding:12px 14px;margin:0;font-size:.94rem}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.sessionbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 48px;background:var(--tint);border-bottom:1px solid var(--line)}
+.sessionbar p{margin:0;font-size:.95rem}
+.sessionbar .btn{padding:9px 16px}
+.sk{background:var(--tint);border-radius:10px;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion: reduce){.sk{animation:none}}
+.petcard.compact .pet{width:160px}
+.petcard .namebox{display:flex;flex-direction:column;gap:8px;width:100%;max-width:260px;margin-top:6px}
+.htable .r2{display:block;font-size:.82rem;color:var(--muted)}
+.endnote{margin:18px 0 0;text-align:center;color:var(--muted);font-size:.92rem}
+
+/* Pet animation */
+@keyframes slap{0%{transform:rotate(0)}20%{transform:rotate(-14deg) translateX(-6px)}45%{transform:rotate(8deg)}70%{transform:rotate(-4deg)}100%{transform:rotate(0)}}
+.pet.slapped svg{transform-origin:50% 80%;animation:slap .8s ease-out .4s 1}
+@media (prefers-reduced-motion: reduce){.pet.slapped svg{animation:none}}
+.pet svg{display:block;width:100%;height:auto}
+
+/* Phone layout: the same screens below 600px wide */
+@container app (max-width: 600px){
+  .appbar{padding:16px 20px}
+  .wordmark{font-size:1.15rem}
+  .nav{gap:16px;font-size:.88rem}
+  .main{padding:20px !important;overflow-y:auto}
+  h3.title{font-size:1.4rem}
+  .field input{font-size:16px}
+  .btn{display:block;width:100%}
+  .actions{flex-direction:column;align-items:stretch}
+  .actions .hint{text-align:center}
+  .split{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .split .art{padding:56px 24px 20px;gap:8px}
+  .split .art .wordmark{top:18px;left:20px}
+  .split .art .pet{width:120px}
+  .split .art p{font-size:1rem}
+  .formside{padding:24px 20px;justify-content:flex-start}
+  .form{max-width:none}
+  .dash,.setup,.run,.result{grid-template-columns:1fr;gap:18px;margin:0 auto}
+  .dash .side,.result .side{gap:14px}
+  .petcard{padding:18px}
+  .petcard .pet{width:150px}
+  .setup .petcard{display:none}
+  .run{justify-items:center;text-align:center}
+  .ringwrap{width:250px;height:250px}
+  .ringwrap .pet{width:150px;left:50px;top:52px}
+  .run .info{align-items:center;width:100%}
+  .run .info .sub{margin:0 auto}
+  .countdown{font-size:3.8rem}
+  .banner p{font-size:.88rem}
+  .scrim{align-items:flex-end}
+  .dialog{width:100%;border-radius:26px 26px 0 0;padding:22px;border-width:1px 0 0}
+  .dialog .actions{flex-direction:column-reverse}
+  .rewards{grid-template-columns:repeat(3,1fr);gap:8px}
+  .reward{padding:12px 6px}
+  .reward b{font-size:1.4rem}
+  .sessionbar{padding:10px 20px;flex-direction:column;align-items:stretch;gap:8px}
+  .sessionbar p{font-size:.88rem}
+  .htable .r2{font-size:.78rem}
+  .result .petcard .pet{width:130px}
+  .htable{display:block;margin-top:14px}
+  .htable thead{display:none}
+  .htable tbody{display:flex;flex-direction:column;gap:8px}
+  .htable tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+  .htable td{padding:0;border:0;font-size:.82rem;color:var(--muted)}
+  .htable td:nth-child(1){grid-column:1;grid-row:1;color:var(--ink);font-size:.94rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .htable td:nth-child(4){grid-column:2;grid-row:1;justify-self:end}
+  .htable td:nth-child(2){grid-column:1;grid-row:2}
+  .htable td:nth-child(3){grid-column:1;grid-row:3;text-align:left}
+  .htable td:nth-child(5){grid-column:2;grid-row:2 / span 2;align-self:end;justify-self:end}
+  .more{align-self:stretch}
+  .settings{gap:20px}
+  .inline{flex-direction:column;align-items:stretch}
+  .inline .btn{margin-top:0}
+  .empty .pet{width:150px}
+  .petcard.compact{padding:12px;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:10px}
+  .petcard.compact .pet{width:96px}
+  .petcard.compact .namebox{max-width:none}
+}
+
+footer{color:var(--muted);font-size:.9rem;max-width:72ch}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <div class="intro">
+    <div>
+      <h1>OnYou web mockups</h1>
+      <p>Every MVP screen twice: in a 1040-pixel desktop browser and on a 390-pixel phone. It is one responsive web app, so each phone screen is the same page with its layout adapted below 600 pixels wide.</p>
+      <p>Copy and behavior follow PRD v2.8: a session belongs to the account, every open OnYou tab shows it, and it ends early only on Give up, logout, or 30 seconds with no tab connected.</p>
+    </div>
+    <div class="hero-pet">
+      <div class="pet" id="heroPet" data-state="hungry" data-bowl="1" role="img" aria-label="Mochi is hungry"></div>
+      <div class="state-toggle" role="group" aria-label="Preview pet state">
+        <button type="button" data-set="starving" aria-pressed="false">Starving</button>
+        <button type="button" data-set="hungry" aria-pressed="true">Hungry</button>
+        <button type="button" data-set="full" aria-pressed="false">Full</button>
+      </div>
+      <div class="hero-caption" id="heroCaption" aria-live="polite">One apple today. One more 25-minute session fills Mochi up.</div>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS -->
+  <section class="flow" aria-labelledby="f-accounts">
+    <h2 id="f-accounts">Accounts</h2>
+    <p>Sign up, log in, and recover a forgotten password. On desktop Mochi greets people on the left and the form sits on the right; on phones Mochi sits above the form.</p>
+    <div class="shots">
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Create account</span></div>
+          <div class="app"><div class="split">
+            <div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your pet is waiting. It eats when you focus.</p></div>
+            <div class="formside"><div class="form">
+              <h3 class="title">Create your account</h3>
+              <div class="field"><label for="su-e">Email</label><input id="su-e" type="email" value="jo@school.edu"></div>
+              <div class="field"><label for="su-p">Password</label><input id="su-p" type="password" value="sunflower22"><span class="hint">8 to 15 characters</span></div>
+              <a class="btn primary block" href="#">Create account</a>
+              <p class="foot">Already have an account? <a class="link" href="#">Log in</a></p>
+            </div></div>
+          </div></div>
+        </div></div>
+        <figcaption><span>Sign up</span><span>US1</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Create account</span></div><div class="app"><div class="split"><div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your pet is waiting. It eats when you focus.</p></div><div class="formside"><div class="form"><h3 class="title">Create your account</h3><div class="field"><label for="se-e">Email</label><input id="se-e" type="email" value="jo@school.edu" aria-invalid="true" aria-describedby="se-ee"><p class="error" id="se-ee">An account with this email already exists. <a class="link" href="#">Log in</a> instead.</p></div><div class="field"><label for="se-p">Password</label><input id="se-p" type="password" value="sun" aria-invalid="true" aria-describedby="se-pe"><p class="error" id="se-pe">Use 8 to 15 characters. This one has 3.</p></div><a class="btn primary block" href="#">Create account</a><p class="foot">Already have an account? <a class="link" href="#">Log in</a></p></div></div></div></div>
+        </div></div>
+        <figcaption><span>Sign up with errors</span><span>US1</span></figcaption>
+      </figure>
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Log in</span></div>
+          <div class="app"><div class="split">
+            <div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Mochi missed you.</p></div>
+            <div class="formside"><div class="form">
+              <h3 class="title">Welcome back</h3>
+              <div class="field"><label for="li-e">Email</label><input id="li-e" type="email" value="jo@school.edu"></div>
+              <div class="field"><label for="li-p">Password</label><input id="li-p" type="password" value="wrongpass" aria-invalid="true" aria-describedby="li-err"></div>
+              <p class="error" id="li-err" role="alert">Email or password is incorrect. Check both and try again.</p>
+              <a class="link" href="#">Forgot password?</a>
+              <a class="btn primary block" href="#">Log in</a>
+              <p class="foot">New here? <a class="link" href="#">Create an account</a></p>
+            </div></div>
+          </div></div>
+        </div></div>
+        <figcaption><span>Log in with an error</span><span>US1</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Reset password</span></div>
+          <div class="app"><div class="split">
+            <div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your progress is safe. Only the password changes.</p></div>
+            <div class="formside"><div class="form">
+              <h3 class="title">Reset your password</h3>
+              <p class="sub">Enter the email for your account. A reset link will be sent if the account exists.</p>
+              <div class="field"><label for="fp-e">Email</label><input id="fp-e" type="email" value="jo@school.edu"></div>
+              <a class="btn primary block" href="#">Send reset link</a>
+              <a class="link" href="#">Back to log in</a>
+            </div></div>
+          </div></div>
+        </div></div>
+        <figcaption><span>Forgot password</span><span>US2</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Reset password</span></div><div class="app"><div class="split"><div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your progress is safe. Only the password changes.</p></div><div class="formside"><div class="form"><h3 class="title">Reset your password</h3><p class="sub">Enter the email for your account. A reset link will be sent if the account exists.</p><div class="field"><label for="tm-e">Email</label><input id="tm-e" type="email" value="jo@school.edu"></div><p class="error" role="alert">Too many reset requests. Wait a few minutes, then try again.</p><a class="btn primary block" href="#" aria-disabled="true">Send reset link</a><a class="link" href="#">Back to log in</a></div></div></div></div>
+        </div></div>
+        <figcaption><span>Too many reset requests</span><span>US2</span></figcaption>
+      </figure>
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Check your email</span></div>
+          <div class="app"><div class="split">
+            <div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your progress is safe. Only the password changes.</p></div>
+            <div class="formside"><div class="form">
+              <h3 class="title">Check your email</h3>
+              <p class="sub">If an account exists for jo@school.edu, a reset link is on its way. The link works once and expires in 30 minutes.</p>
+              <a class="btn secondary block" href="#">Back to log in</a>
+              <a class="link" href="#">Send another link</a>
+            </div></div>
+          </div></div>
+        </div></div>
+        <figcaption><span>Reset link sent</span><span>US2</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Set new password</span></div>
+          <div class="app"><div class="split">
+            <div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your progress is safe. Only the password changes.</p></div>
+            <div class="formside"><div class="form">
+              <h3 class="title">Set a new password</h3>
+              <div class="field"><label for="rp-p">New password</label><input id="rp-p" type="password" value="maplecloud9"><span class="hint">8 to 15 characters. Saving signs you out everywhere, including any session in progress.</span></div>
+              <a class="btn primary block" href="#">Save new password</a>
+            </div></div>
+          </div></div>
+        </div></div>
+        <figcaption><span>Set new password</span><span>US2</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Set new password</span></div><div class="app"><div class="split"><div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your progress is safe. Only the password changes.</p></div><div class="formside"><div class="form"><h3 class="title">Set a new password</h3><div class="field"><label for="ne-p">New password</label><input id="ne-p" type="password" value="maple" aria-invalid="true" aria-describedby="ne-pe"><p class="error" id="ne-pe">Use 8 to 15 characters. This one has 5.</p></div><a class="btn primary block" href="#">Save new password</a></div></div></div></div>
+        </div></div>
+        <figcaption><span>New password with an error</span><span>US2</span></figcaption>
+      </figure>
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Link expired</span></div>
+          <div class="app"><div class="split">
+            <div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Your progress is safe. Only the password changes.</p></div>
+            <div class="formside"><div class="form">
+              <h3 class="title">This link no longer works</h3>
+              <p class="sub">Reset links work once and expire after 30 minutes. A newer link also replaces older ones. Request a new link to continue.</p>
+              <a class="btn primary block" href="#">Send a new link</a>
+              <a class="link" href="#">Back to log in</a>
+            </div></div>
+          </div></div>
+        </div></div>
+        <figcaption><span>Expired, used, or invalid link</span><span>US2</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Log in</span></div><div class="app"><div class="split"><div class="art"><span class="wordmark">OnYou</span><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><p>Mochi missed you.</p></div><div class="formside"><div class="form"><p class="note" role="status">Password updated. Log in with your new password.</p><h3 class="title">Welcome back</h3><div class="field"><label for="pu-e">Email</label><input id="pu-e" type="email" value="jo@school.edu"></div><div class="field"><label for="pu-p">Password</label><input id="pu-p" type="password" value=""></div><a class="link" href="#">Forgot password?</a><a class="btn primary block" href="#">Log in</a></div></div></div></div>
+        </div></div>
+        <figcaption><span>Password updated</span><span>US2</span></figcaption>
+      </figure>
+
+
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="flow" aria-labelledby="f-pet">
+    <h2 id="f-pet">Dashboard and pet</h2>
+    <p>Mochi beside today’s apples and total coins on desktop, stacked on phones. Apples reset at midnight; coins never do. While a session runs, every screen shows a bar that leads back to it.</p>
+    <div class="shots">
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Home</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="dash">
+              <div class="petcard"><div class="pet" data-state="starving" data-bowl="0" role="img" aria-label="Mochi is starving"></div><p class="petname">Mochi</p><span class="state-label starving">Starving</span></div>
+              <div class="side">
+                <h3 class="title">Mochi hasn’t eaten today.</h3>
+                <p class="sub">Finish a session to feed it. Every 25 minutes of focus earns an apple.</p>
+                <div class="stats">
+                  <div class="stat"><div class="k">Apples today</div><div class="v apples" data-apples="0"></div><div class="progress"><i style="width:0%"></i></div><div class="progress-text">0 of 25 min to the next apple</div></div>
+                  <div class="stat"><div class="k">Coins</div><div class="v"><span class="coin"></span>0</div></div>
+                </div>
+                <div class="actions"><a class="btn primary" href="#">Start focusing</a></div>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>New account, pet starving</span><span>US3, US4</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Home</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="main"><div class="dash"><div class="petcard compact"><div class="pet" data-state="starving" data-bowl="0" role="img" aria-label="Your pet is starving"></div><div class="namebox"><div class="field"><label for="np-n">Name your pet</label><input id="np-n" type="text" value="" placeholder="Mochi"><span class="hint">Optional. Up to 30 characters. Change it any time in Settings.</span></div><a class="btn secondary block" href="#">Save name</a></div></div><div class="side"><h3 class="title">Meet your pet.</h3><p class="sub">It eats when you focus. Every 25 minutes of focus earns an apple, up to two a day. Naming it is optional.</p><div class="stats"><div class="stat"><div class="k">Apples today</div><div class="v apples" data-apples="0"></div><div class="progress"><i style="width:0%"></i></div><div class="progress-text">0 of 25 min to the next apple</div></div><div class="stat"><div class="k">Coins</div><div class="v"><span class="coin"></span>0</div></div></div><div class="actions"><a class="btn primary" href="#">Start focusing</a></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>First visit, name your pet</span><span>US3</span></figcaption>
+      </figure>
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Home</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="dash">
+              <div class="petcard"><div class="pet" data-state="hungry" data-bowl="1" role="img" aria-label="Mochi is hungry"></div><p class="petname">Mochi</p><span class="state-label hungry">Hungry</span></div>
+              <div class="side">
+                <h3 class="title">One apple down, one to go.</h3>
+                <p class="sub">15 more minutes of focus earns the second apple.</p>
+                <div class="stats">
+                  <div class="stat"><div class="k">Apples today</div><div class="v apples" data-apples="1"></div><div class="progress"><i style="width:40%"></i></div><div class="progress-text">10 of 25 min to the next apple</div></div>
+                  <div class="stat"><div class="k">Coins</div><div class="v"><span class="coin"></span>385</div></div>
+                </div>
+                <div class="actions"><a class="btn primary" href="#">Start focusing</a></div>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Partial progress, pet hungry</span><span>US4</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Home</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="dash">
+              <div class="petcard"><div class="pet" data-state="full" data-bowl="2" role="img" aria-label="Mochi is full"></div><p class="petname">Mochi</p><span class="state-label full">Full</span></div>
+              <div class="side">
+                <h3 class="title">Mochi is full for today.</h3>
+                <p class="sub">More sessions still earn coins. Apples start again at midnight.</p>
+                <div class="stats">
+                  <div class="stat"><div class="k">Apples today</div><div class="v apples" data-apples="2"></div><div class="progress"><i style="width:100%"></i></div><div class="progress-text">Full for today</div></div>
+                  <div class="stat"><div class="k">Coins</div><div class="v"><span class="coin"></span>460</div></div>
+                </div>
+                <div class="actions"><a class="btn primary" href="#">Start focusing</a></div>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Daily cap reached, pet full</span><span>US4</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 18:42 remaining</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="sessionbar" role="status"><p><b>“Essay draft: intro” is running.</b> 18:42 left, ends at 3:25 PM.</p><a class="btn primary" href="#">Return to session</a></div><div class="main" style="padding-top:28px"><div class="dash"><div class="petcard compact"><div class="pet" data-state="hungry" data-bowl="1" role="img" aria-label="Mochi is hungry"></div><p class="petname">Mochi</p><span class="state-label hungry">Hungry</span></div><div class="side"><h3 class="title">One apple down, one to go.</h3><p class="sub">This session finishing earns the second apple.</p><div class="stats"><div class="stat"><div class="k">Apples today</div><div class="v apples" data-apples="1"></div><div class="progress"><i style="width:40%"></i></div><div class="progress-text">10 of 25 min to the next apple</div></div><div class="stat"><div class="k">Coins</div><div class="v"><span class="coin"></span>385</div></div></div><div class="actions"><a class="btn primary" href="#" aria-disabled="true" aria-describedby="one-at">Start focusing</a><span class="hint" id="one-at">One session at a time. Finish or give up the current one first.</span></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>Session running elsewhere in the app</span><span>US5</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Home</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="main" aria-busy="true"><span class="vh">Loading your dashboard</span><div class="dash" aria-hidden="true"><div class="petcard"><div class="sk" style="width:170px;height:170px;border-radius:50%"></div><div class="sk" style="width:110px;height:22px"></div><div class="sk" style="width:80px;height:22px;border-radius:999px"></div></div><div class="side"><div class="sk" style="width:80%;height:32px"></div><div class="sk" style="width:60%;height:18px"></div><div class="stats"><div class="sk" style="height:112px;border-radius:18px"></div><div class="sk" style="height:112px;border-radius:18px"></div></div><div class="sk" style="width:160px;height:48px;border-radius:14px"></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>Dashboard loading</span><span>§10</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Home</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#" aria-current="page">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="main"><div class="empty" role="alert"><div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div><h3 class="title">Couldn’t load your dashboard</h3><p class="sub">Check your internet connection and try again. Your pet, coins, and sessions are saved.</p><a class="btn primary" href="#">Try again</a></div></div></div>
+        </div></div>
+        <figcaption><span>Couldn’t load</span><span>§10</span></figcaption>
+      </figure>
+
+
+
+
+    </div>
+  </section>
+
+  <!-- FOCUS -->
+  <section class="flow" aria-labelledby="f-focus">
+    <h2 id="f-focus">Focus session</h2>
+    <p>Start, count down, finish, or give up. The session belongs to the account, so every open OnYou tab shows the same countdown and any of them can finish it or give up. Results show coins, feeding minutes, and apples.</p>
+    <div class="shots">
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Start focusing</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="setup">
+              <div class="form">
+                <h3 class="title">What are you working on?</h3>
+                <div class="field"><label for="fs-t">Task</label><input id="fs-t" type="text" value="Essay draft: intro"><span class="hint">Optional. Up to 80 characters.</span></div>
+                <fieldset class="durations">
+                  <legend>How long?</legend>
+                  <label><input type="radio" name="d1"><b>15</b><small>minutes</small></label>
+                  <label><input type="radio" name="d1" checked><b>25</b><small>minutes</small></label>
+                  <label><input type="radio" name="d1"><b>50</b><small>minutes</small></label>
+                </fieldset>
+                <p class="sub">Keep at least one OnYou tab open until the timer ends. Switching tabs or apps is fine. If no OnYou tab is connected for 30 seconds, the session ends without rewards.</p>
+                <div class="actions"><a class="btn primary" href="#">Start 25 minutes</a></div>
+              </div>
+              <div class="petcard small"><div class="pet" data-state="hungry" data-bowl="1" role="img" aria-label="Mochi is hungry"></div><p class="petname">Mochi</p><span class="state-label hungry">Hungry</span><p class="sub" style="text-align:center">25 minutes earns Mochi’s second apple.</p></div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Choose task and duration</span><span>US5</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Start focusing</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="main"><div class="setup"><div class="form"><h3 class="title">What are you working on?</h3><div class="field"><label for="tl-t">Task</label><input id="tl-t" type="text" value="Essay draft: introduction, thesis statement, three body paragraph outlines, and sources" aria-invalid="true" aria-describedby="tl-e"><p class="error" id="tl-e">Task names can be up to 80 characters. This one has 87.</p></div><fieldset class="durations"><legend>How long?</legend><label><input type="radio" name="d2"><b>15</b><small>minutes</small></label><label><input type="radio" name="d2" checked><b>25</b><small>minutes</small></label><label><input type="radio" name="d2"><b>50</b><small>minutes</small></label></fieldset><div class="actions"><a class="btn primary" href="#" aria-disabled="true">Start 25 minutes</a></div></div><div class="petcard small"><div class="pet" data-state="hungry" data-bowl="1" role="img" aria-label="Mochi is hungry"></div><p class="petname">Mochi</p><span class="state-label hungry">Hungry</span><p class="sub" style="text-align:center">25 minutes earns Mochi’s second apple.</p></div></div></div></div>
+        </div></div>
+        <figcaption><span>Task name too long</span><span>US5</span></figcaption>
+      </figure>
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab">🍎 18:42 remaining</span><span class="tab on">🍎 18:42 remaining</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="run">
+              <div class="ringwrap">
+                <svg class="ring" viewBox="0 0 250 250" aria-hidden="true">
+                  <circle cx="125" cy="125" r="112" fill="none" stroke="var(--tint)" stroke-width="9"/>
+                  <circle cx="125" cy="125" r="112" fill="none" stroke="var(--pine)" stroke-width="9" stroke-linecap="round" stroke-dasharray="703.7" stroke-dashoffset="177" transform="rotate(-90 125 125)"/>
+                </svg>
+                <div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div>
+              </div>
+              <div class="info">
+                <div class="countdown" aria-label="18 minutes 42 seconds remaining">18:42</div>
+                <p class="task">Essay draft: intro</p>
+                <p class="meta">25 minutes, ends at 3:25 PM</p>
+                <p class="sub">This session shows in every OnYou tab you have open. Keep at least one open until 3:25 PM.</p>
+                <a class="btn danger" href="#">Give up</a>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Session running, shown in every open tab</span><span>US5</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 18:42 remaining</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main" style="padding-top:24px">
+              <div class="banner" role="alert"><p><b>Can’t reach OnYou.</b> Check your internet connection. If it stays down for about 30 seconds, this session ends without rewards.</p></div>
+              <div class="run">
+                <div class="ringwrap">
+                  <svg class="ring" viewBox="0 0 250 250" aria-hidden="true">
+                    <circle cx="125" cy="125" r="112" fill="none" stroke="var(--tint)" stroke-width="9"/>
+                    <circle cx="125" cy="125" r="112" fill="none" stroke="var(--pine)" stroke-width="9" stroke-linecap="round" stroke-dasharray="703.7" stroke-dashoffset="177" transform="rotate(-90 125 125)"/>
+                  </svg>
+                  <div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div>
+                </div>
+                <div class="info">
+                  <div class="countdown" aria-label="18 minutes 42 seconds remaining">18:42</div>
+                  <p class="task">Essay draft: intro</p>
+                  <p class="meta">25 minutes, ends at 3:25 PM</p>
+                  <a class="btn danger" href="#">Give up</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption><span>Connection warning</span><span>US5</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 18:42 remaining</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="run">
+              <div class="ringwrap">
+                <svg class="ring" viewBox="0 0 250 250" aria-hidden="true">
+                  <circle cx="125" cy="125" r="112" fill="none" stroke="var(--tint)" stroke-width="9"/>
+                  <circle cx="125" cy="125" r="112" fill="none" stroke="var(--pine)" stroke-width="9" stroke-linecap="round" stroke-dasharray="703.7" stroke-dashoffset="177" transform="rotate(-90 125 125)"/>
+                </svg>
+                <div class="pet" data-state="hungry" role="img" aria-label="Mochi is waiting"></div>
+              </div>
+              <div class="info">
+                <div class="countdown">18:42</div>
+                <p class="task">Essay draft: intro</p>
+              </div>
+            </div></div>
+            <div class="scrim">
+              <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="gu-t">
+                <h3 class="title" id="gu-t">Give up this session?</h3>
+                <p class="sub">Mochi gets nothing from this session, and the 6 minutes so far won’t count. Earlier progress stays safe. This ends the session in every open tab.</p>
+                <div class="actions"><a class="btn danger" href="#">Give up</a><a class="btn primary" href="#">Keep focusing</a></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption><span>Give up confirmation</span><span>US7</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Session complete</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="result">
+              <div class="petcard"><div class="pet" data-state="full" data-bowl="2" role="img" aria-label="Mochi is full"></div><span class="state-label full">Full</span></div>
+              <div class="side">
+                <h3 class="title">Session complete</h3>
+                <p class="sub">Essay draft: intro, 25 minutes</p>
+                <div class="rewards">
+                  <div class="reward"><b>+25</b><span>coins</span></div>
+                  <div class="reward"><b>+15</b><span>feeding minutes</span></div>
+                  <div class="reward"><b>+1</b><span>apple</span></div>
+                </div>
+                <p class="sub">Mochi is full for today. 10 minutes went past the 50-minute daily limit, so they don’t count toward apples.</p>
+                <div class="actions"><a class="btn primary" href="#">Back to dashboard</a><a class="btn secondary" href="#">Start another session</a></div>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Session completed</span><span>US6</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Session complete</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="main"><div class="result"><div class="petcard"><div class="pet" data-state="starving" data-bowl="0" role="img" aria-label="Mochi is starving"></div><span class="state-label starving">Starving</span></div><div class="side"><h3 class="title">Session complete</h3><p class="sub">Problem set 6, 15 minutes</p><div class="rewards"><div class="reward"><b>+15</b><span>coins</span></div><div class="reward"><b>+15</b><span>feeding minutes</span></div><div class="reward"><b>0</b><span>apples</span></div></div><p class="sub">10 more minutes of focus today earns Mochi’s first apple.</p><div class="actions"><a class="btn primary" href="#">Back to dashboard</a><a class="btn secondary" href="#">Start another session</a></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>Completed, no apple yet</span><span>US6</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Session complete</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header><div class="main"><div class="result"><div class="petcard"><div class="pet" data-state="full" data-bowl="2" role="img" aria-label="Mochi is full"></div><span class="state-label full">Full</span></div><div class="side"><h3 class="title">Session complete</h3><p class="sub">Lab report figures, 50 minutes</p><div class="rewards"><div class="reward"><b>+50</b><span>coins</span></div><div class="reward"><b>0</b><span>feeding minutes</span></div><div class="reward"><b>0</b><span>apples</span></div></div><p class="sub">Mochi was already full today, so this session earns coins only. Apples start again at midnight.</p><div class="actions"><a class="btn primary" href="#">Back to dashboard</a><a class="btn secondary" href="#">Start another session</a></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>Completed, pet already full</span><span>US6</span></figcaption>
+      </figure>
+
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Session ended early</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="result">
+              <div class="petcard"><div class="pet slapped" data-state="slapped" data-bowl="1" role="img" aria-label="Mochi got slapped"></div><span class="state-label hungry">Hungry</span></div>
+              <div class="side">
+                <h3 class="title">Session ended early</h3>
+                <p class="sub">Essay draft: intro, 25 minutes. The session was given up, or no OnYou tab was connected for 30 seconds.</p>
+                <div class="rewards">
+                  <div class="reward none"><b>0</b><span>coins</span></div>
+                  <div class="reward none"><b>0</b><span>feeding minutes</span></div>
+                  <div class="reward none"><b>0</b><span>apples</span></div>
+                </div>
+                <p class="sub">No rewards this time. Apples and coins from earlier sessions are unchanged.</p>
+                <div class="actions"><a class="btn primary" href="#">Back to dashboard</a></div>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Session abandoned</span><span>US7</span></figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- HISTORY & SETTINGS -->
+  <section class="flow" aria-labelledby="f-history">
+    <h2 id="f-history">History and settings</h2>
+    <p>History lists every session, newest first, 20 at a time: a table on desktop and cards on phones. Settings holds the pet’s name and logout.</p>
+    <div class="shots">
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 History</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#" aria-current="page">History</a><a href="#">Settings</a></nav></header>
+            <div class="main" style="padding-top:32px">
+              <h3 class="title">Your sessions</h3>
+              <table class="htable">
+                <thead><tr><th scope="col">Task</th><th scope="col">Date</th><th scope="col" class="num">Duration</th><th scope="col">Outcome</th><th scope="col" class="num">Rewards</th></tr></thead>
+                <tbody>
+                  <tr><td>Essay draft: intro</td><td>Today, 3:00 PM</td><td class="num">25 min</td><td><span class="badge ok">Completed</span></td><td class="num">+25 coins<span class="r2">+25 feeding min</span></td></tr>
+                  <tr><td>Read chapter 4</td><td>Today, 11:10 AM</td><td class="num">50 min</td><td><span class="badge no">Abandoned</span></td><td class="num">No rewards</td></tr>
+                  <tr><td>Problem set 6</td><td>Today, 9:30 AM</td><td class="num">15 min</td><td><span class="badge ok">Completed</span></td><td class="num">+15 coins<span class="r2">+15 feeding min</span></td></tr>
+                  <tr><td>Focus session</td><td>Mon Oct 26, 8:15 PM</td><td class="num">50 min</td><td><span class="badge ok">Completed</span></td><td class="num">+50 coins<span class="r2">+25 feeding min</span></td></tr>
+                  <tr><td>Lab report figures</td><td>Mon Oct 26, 4:40 PM</td><td class="num">25 min</td><td><span class="badge ok">Completed</span></td><td class="num">+25 coins<span class="r2">+25 feeding min</span></td></tr>
+                  <tr><td>Flashcards: biology</td><td>Sun Oct 25, 7:05 PM</td><td class="num">25 min</td><td><span class="badge no">Abandoned</span></td><td class="num">No rewards</td></tr>
+                </tbody>
+              </table>
+              <a class="btn secondary more" href="#">Load more</a>
+            </div>
+          </div>
+        </div></div>
+        <figcaption><span>History list</span><span>US8</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 History</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#" aria-current="page">History</a><a href="#">Settings</a></nav></header><div class="main" style="padding-top:32px"><h3 class="title">Your sessions</h3><table class="htable"><thead><tr><th scope="col">Task</th><th scope="col">Date</th><th scope="col" class="num">Duration</th><th scope="col">Outcome</th><th scope="col" class="num">Rewards</th></tr></thead><tbody><tr><td>Problem set 6</td><td>Today, 9:30 AM</td><td class="num">15 min</td><td><span class="badge ok">Completed</span></td><td class="num">+15 coins<span class="r2">+15 feeding min</span></td></tr>
+<tr><td>Focus session</td><td>Mon Oct 26, 8:15 PM</td><td class="num">50 min</td><td><span class="badge ok">Completed</span></td><td class="num">+50 coins<span class="r2">+25 feeding min</span></td></tr>
+<tr><td>Lab report figures</td><td>Mon Oct 26, 4:40 PM</td><td class="num">25 min</td><td><span class="badge ok">Completed</span></td><td class="num">+25 coins<span class="r2">+25 feeding min</span></td></tr></tbody></table><a class="btn secondary more" href="#" aria-disabled="true" aria-busy="true">Loading more sessions…</a></div></div>
+        </div></div>
+        <figcaption><span>History, loading more</span><span>US8</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 History</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#" aria-current="page">History</a><a href="#">Settings</a></nav></header><div class="main" style="padding-top:32px"><h3 class="title">Your sessions</h3><table class="htable"><thead><tr><th scope="col">Task</th><th scope="col">Date</th><th scope="col" class="num">Duration</th><th scope="col">Outcome</th><th scope="col" class="num">Rewards</th></tr></thead><tbody><tr><td>Vocab review</td><td>Tue Oct 20, 6:00 PM</td><td class="num">15 min</td><td><span class="badge ok">Completed</span></td><td class="num">+15 coins<span class="r2">+15 feeding min</span></td></tr>
+<tr><td>Focus session</td><td>Tue Oct 20, 5:20 PM</td><td class="num">25 min</td><td><span class="badge no">Abandoned</span></td><td class="num">No rewards</td></tr>
+<tr><td>Problem set 5</td><td>Mon Oct 19, 7:45 PM</td><td class="num">50 min</td><td><span class="badge ok">Completed</span></td><td class="num">+50 coins<span class="r2">+50 feeding min</span></td></tr></tbody></table><p class="endnote">That’s every session. Your first one was on Mon Oct 19.</p></div></div>
+        </div></div>
+        <figcaption><span>History, all loaded</span><span>US8</span></figcaption>
+      </figure>
+
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 History</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#" aria-current="page">History</a><a href="#">Settings</a></nav></header>
+            <div class="main"><div class="empty">
+              <div class="pet" data-state="starving" role="img" aria-label="Mochi is waiting"></div>
+              <h3 class="title">No sessions yet</h3>
+              <p class="sub">Finished and abandoned sessions show up here.</p>
+              <a class="btn primary" href="#">Start focusing</a>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>History empty</span><span>US8</span></figcaption>
+      </figure>
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Settings</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#" aria-current="page">Settings</a></nav></header>
+            <div class="main" style="padding-top:32px"><div class="settings">
+              <h3 class="title">Settings</h3>
+              <div class="group">
+                <h4>Pet</h4>
+                <div class="inline"><div class="field"><label for="st-n">Pet name</label><input id="st-n" type="text" value="Mochi"><span class="hint">Up to 30 characters. Leave blank to use Mochi.</span></div><a class="btn secondary" href="#">Save name</a></div>
+              </div>
+              <div class="group">
+                <h4>Account</h4>
+                <div class="field"><label for="st-e">Email</label><input id="st-e" type="email" value="jo@school.edu" readonly></div>
+                <div class="actions"><a class="btn danger" href="#">Log out</a><span class="hint">Logging out during a session ends that session.</span></div>
+              </div>
+            </div></div>
+          </div>
+        </div></div>
+        <figcaption><span>Settings</span><span>US1, US3</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Settings</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#" aria-current="page">Settings</a></nav></header><div class="main" style="padding-top:32px"><div class="settings"><h3 class="title">Settings</h3><div class="group"><h4>Pet</h4><div class="inline"><div class="field"><label for="pe-n">Pet name</label><input id="pe-n" type="text" value="Mochi the Magnificent Apple Muncher" aria-invalid="true" aria-describedby="pe-e"><p class="error" id="pe-e">Pet names can be up to 30 characters. This one has 35.</p></div><a class="btn secondary" href="#">Save name</a></div></div><div class="group"><h4>Account</h4><div class="field"><label>Email</label><input type="email" value="jo@school.edu" readonly aria-label="Email"></div><div class="actions"><a class="btn danger" href="#">Log out</a><span class="hint">Logging out during a session ends that session.</span></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>Pet name too long</span><span>US3</span></figcaption>
+      </figure>
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 Settings</span></div><div class="app"><header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#" aria-current="page">Settings</a></nav></header><div class="main" style="padding-top:32px"><div class="settings"><h3 class="title">Settings</h3><div class="group"><h4>Pet</h4><div class="inline"><div class="field"><label for="ps-n">Pet name</label><input id="ps-n" type="text" value="Biscuit"><p class="ok" role="status">Name saved. Your pet is now Biscuit.</p></div><a class="btn secondary" href="#">Save name</a></div></div><div class="group"><h4>Account</h4><div class="field"><label>Email</label><input type="email" value="jo@school.edu" readonly aria-label="Email"></div><div class="actions"><a class="btn danger" href="#">Log out</a><span class="hint">Logging out during a session ends that session.</span></div></div></div></div></div>
+        </div></div>
+        <figcaption><span>Pet name saved</span><span>US3</span></figcaption>
+      </figure>
+
+
+
+      <figure>
+        <div class="viewport"><div class="browser">
+          <div class="chrome"><span class="tab on">🍎 18:42 remaining</span></div>
+          <div class="app">
+            <header class="appbar"><span class="wordmark">OnYou</span><nav class="nav"><a href="#">Home</a><a href="#">History</a><a href="#" aria-current="page">Settings</a></nav></header>
+            <div class="main" style="padding-top:32px"><div class="settings">
+              <h3 class="title">Settings</h3>
+              <div class="group">
+                <h4>Pet</h4>
+                <div class="inline"><div class="field"><label for="st-n2">Pet name</label><input id="st-n2" type="text" value="Mochi"><span class="hint">Up to 30 characters. Leave blank to use Mochi.</span></div><a class="btn secondary" href="#">Save name</a></div>
+              </div>
+            </div></div>
+            <div class="scrim">
+              <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="lo-t">
+                <h3 class="title" id="lo-t">Log out and end this session?</h3>
+                <p class="sub">“Essay draft: intro” is still running. Logging out ends it on every device, and Mochi gets nothing from it.</p>
+                <div class="actions"><a class="btn danger" href="#">Log out and end session</a><a class="btn primary" href="#">Stay logged in</a></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption><span>Log out during a session</span><span>US1</span></figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>Responsive web mockup for the OnYou MVP. On phones, dialogs become bottom sheets, buttons span the screen, the duration preview card is hidden, and inputs use 16-pixel text so the browser does not zoom. Colors and type are placeholders for the Tailwind theme: pine for actions, apple red for food, plum for giving up and errors. Pet art is original and drawn in code.</p>
+  </footer>
+</main>
+
+<script>
+(function(){
+  function apple(filled){
+    var fill = filled ? 'var(--apple)' : 'none';
+    var stroke = filled ? 'var(--apple)' : 'var(--line)';
+    return '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-2-1.6-6-1.4-7 2.5-.9 3.6 1.6 9.5 4.4 9.5 1.2 0 1.6-.6 2.6-.6s1.4.6 2.6.6c2.8 0 5.3-5.9 4.4-9.5C18 5.6 14 5.4 12 7z" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.6"/><path d="M12 7c0-2 1-3.5 2.8-4" fill="none" stroke="var(--leaf)" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  }
+  function coin(){
+    return '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#E7B53C" stroke="#B9871A" stroke-width="1.6"/><circle cx="12" cy="12" r="5" fill="none" stroke="#B9871A" stroke-width="1.4"/></svg>';
+  }
+  function pet(state, bowl){
+    var hasBowl = bowl !== null && bowl !== undefined && bowl !== '';
+    var vbH = hasBowl ? 158 : 118;
+    var INK = '#2A211B', EAR = '#9C6B47', MUZZLE = '#FBEBDD';
+    var cy = state === 'starving' ? 70 : 64;
+    var eL = 47, eR = 73, eY = cy - 4;
+    var face = '';
+    var nose = '<path d="M54 '+(cy+5)+' q6 -3 12 0 q-1 6 -6 7 q-5 -1 -6 -7z" fill="'+INK+'"/>';
+    var muzzle = '<ellipse cx="60" cy="'+(cy+13)+'" rx="16" ry="11" fill="'+MUZZLE+'"/>';
+    var happyMouth = '<path d="M60 '+(cy+12)+' v3 M60 '+(cy+15)+' q-4 4 -8 1 M60 '+(cy+15)+' q4 4 8 1" fill="none" stroke="'+INK+'" stroke-width="2.4" stroke-linecap="round"/>';
+    if (state === 'full'){
+      face = '<path d="M'+(eL-6)+' '+(eY+1)+' q6 -7 12 0 M'+(eR-6)+' '+(eY+1)+' q6 -7 12 0" fill="none" stroke="'+INK+'" stroke-width="3.2" stroke-linecap="round"/>'+
+             muzzle+'<ellipse cx="60" cy="'+(cy+21)+'" rx="4.5" ry="5.5" fill="#E8798A"/>'+happyMouth+nose+
+             '<circle cx="36" cy="'+(cy+8)+'" r="5" fill="var(--apple)" opacity=".25"/><circle cx="84" cy="'+(cy+8)+'" r="5" fill="var(--apple)" opacity=".25"/>';
+    } else if (state === 'hungry'){
+      face = '<circle cx="'+eL+'" cy="'+eY+'" r="4.6" fill="'+INK+'"/><circle cx="'+eR+'" cy="'+eY+'" r="4.6" fill="'+INK+'"/>'+
+             '<circle cx="'+(eL+1.6)+'" cy="'+(eY-1.6)+'" r="1.5" fill="#fff"/><circle cx="'+(eR+1.6)+'" cy="'+(eY-1.6)+'" r="1.5" fill="#fff"/>'+
+             muzzle+happyMouth+nose;
+    } else if (state === 'starving'){
+      face = '<path d="M'+(eL-5)+' '+(eY-1)+' q5 5 10 0 M'+(eR-5)+' '+(eY-1)+' q5 5 10 0" fill="none" stroke="'+INK+'" stroke-width="3" stroke-linecap="round"/>'+
+             '<path d="M'+(eL-6)+' '+(eY-9)+' l10 -3 M'+(eR+6)+' '+(eY-9)+' l-10 -3" stroke="'+INK+'" stroke-width="2.4" stroke-linecap="round"/>'+
+             muzzle+'<path d="M53 '+(cy+20)+' q7 -5 14 0" fill="none" stroke="'+INK+'" stroke-width="2.6" stroke-linecap="round"/>'+nose+
+             '<path d="M92 '+(cy-26)+' q-5 8 0 10 q5 -2 0 -10z" fill="#7FB3D9"/>';
+    } else if (state === 'slapped'){
+      face = '<path d="M'+(eL-4)+' '+(eY-5)+' l8 5 l-8 5 M'+(eR+4)+' '+(eY-5)+' l-8 5 l8 5" fill="none" stroke="'+INK+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+
+             muzzle+'<path d="M53 '+(cy+20)+' q7 -4 14 0" fill="none" stroke="'+INK+'" stroke-width="2.6" stroke-linecap="round"/>'+nose+
+             '<ellipse cx="84" cy="'+(cy+9)+'" rx="9" ry="7" fill="var(--apple)" opacity=".55"/>'+
+             '<path d="M110 '+(cy+12)+' l9 0 M108 '+(cy+22)+' l8 4 M110 '+(cy+2)+' l8 -3" stroke="var(--muted)" stroke-width="2.6" stroke-linecap="round"/>';
+    }
+    var earRotL = state === 'starving' ? 6 : 22, earRotR = state === 'slapped' ? -40 : (state === 'starving' ? -6 : -22);
+    var earY = state === 'starving' ? cy + 4 : cy - 2;
+    var ears = '<ellipse cx="29" cy="'+earY+'" rx="10" ry="21" fill="'+EAR+'" transform="rotate('+earRotL+' 33 '+(cy-20)+')"/>'+
+               '<ellipse cx="91" cy="'+earY+'" rx="10" ry="21" fill="'+EAR+'" transform="rotate('+earRotR+' 87 '+(cy-20)+')"/>';
+    var head = '<ellipse cx="60" cy="'+cy+'" rx="34" ry="30" fill="var(--peach)" stroke="var(--peach-dark)" stroke-width="2.2"/>'+
+               '<path d="M42 '+(cy+25)+' q18 9 36 0" fill="none" stroke="var(--pine)" stroke-width="5" stroke-linecap="round"/>'+
+               '<circle cx="60" cy="'+(cy+33)+'" r="4.2" fill="#E7B53C" stroke="#B9871A" stroke-width="1.2"/>'+
+               '<ellipse cx="'+eR+'" cy="'+(eY-1)+'" rx="10" ry="9" fill="'+EAR+'" opacity=".55"/>'+
+               '<ellipse cx="50" cy="'+(cy-21)+'" rx="9" ry="4" fill="#fff" opacity=".3"/>';
+    var bowlSvg = '';
+    if (hasBowl){
+      var n = parseInt(bowl,10)||0, apples='';
+      var pos = n===1 ? [60] : n===2 ? [48,72] : [];
+      pos.forEach(function(x){
+        apples += '<circle cx="'+x+'" cy="118" r="9" fill="var(--apple)"/><path d="M'+x+' 109 q2 -5 6 -6" fill="none" stroke="var(--leaf)" stroke-width="2.2" stroke-linecap="round"/>';
+      });
+      bowlSvg = '<path d="M24 124 L96 124 Q93 152 60 152 Q27 152 24 124 Z" fill="var(--tint)" stroke="var(--line)" stroke-width="2"/>' + apples;
+    }
+    return '<svg viewBox="-4 -6 128 '+(vbH+8)+'" aria-hidden="true">'+head+ears+face+bowlSvg+'</svg>';
+  }
+  // Pair each desktop window with a phone copy of the same screen.
+  document.querySelectorAll('figure').forEach(function(fig){
+    var vp = fig.querySelector('.viewport');
+    var pair = document.createElement('div'); pair.className = 'pair';
+    vp.parentNode.insertBefore(pair, vp);
+    var dWrap = document.createElement('div'); dWrap.innerHTML = '<p class="label">Desktop</p>';
+    var mWrap = document.createElement('div'); mWrap.innerHTML = '<p class="label">Phone</p>';
+    var m = vp.cloneNode(true); m.classList.add('m');
+    var b = m.firstElementChild; b.classList.add('phone'); b.dataset.w = 390; b.dataset.h = 820;
+    m.querySelectorAll('[id]').forEach(function(el){ el.id += '-m'; });
+    m.querySelectorAll('label[for]').forEach(function(el){ el.htmlFor += '-m'; });
+    ['aria-labelledby','aria-describedby'].forEach(function(a){
+      m.querySelectorAll('['+a+']').forEach(function(el){ el.setAttribute(a, el.getAttribute(a)+'-m'); });
+    });
+    m.querySelectorAll('input[type=radio]').forEach(function(el){ el.name += '-m'; });
+    dWrap.appendChild(vp); mWrap.appendChild(m);
+    pair.appendChild(dWrap); pair.appendChild(mWrap);
+  });
+  function render(el){ el.innerHTML = pet(el.dataset.state, el.dataset.bowl); }
+  document.querySelectorAll('.pet').forEach(render);
+  document.querySelectorAll('.apples').forEach(function(el){
+    var n = parseInt(el.dataset.apples,10)||0;
+    el.innerHTML = apple(n>=1)+apple(n>=2);
+    el.setAttribute('aria-label', n+' of 2 apples');
+  });
+  document.querySelectorAll('.coin').forEach(function(el){ el.innerHTML = coin(); });
+
+  var captions = {
+    starving:'No apples yet today. One 25-minute session gets Mochi its first apple.',
+    hungry:'One apple today. One more 25-minute session fills Mochi up.',
+    full:'Two apples today. Mochi is full, and coins keep counting.'
+  };
+  var labels = {starving:'Mochi is starving', hungry:'Mochi is hungry', full:'Mochi is full'};
+  var hero = document.getElementById('heroPet');
+  var cap = document.getElementById('heroCaption');
+  document.querySelectorAll('.state-toggle button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var s = b.dataset.set;
+      hero.dataset.state = s;
+      hero.dataset.bowl = s==='starving'?'0':s==='hungry'?'1':'2';
+      hero.setAttribute('aria-label', labels[s]);
+      render(hero);
+      cap.textContent = captions[s];
+      document.querySelectorAll('.state-toggle button').forEach(function(x){ x.setAttribute('aria-pressed', x===b ? 'true':'false'); });
+    });
+  });
+  document.querySelectorAll('a[href="#"]').forEach(function(a){ a.addEventListener('click', function(e){ e.preventDefault(); }); });
+
+  // Scale each desktop and phone window to fit its column.
+  function fit(){
+    document.querySelectorAll('.viewport').forEach(function(v){
+      var b = v.firstElementChild;
+      var W = +b.dataset.w || 1040, H = +b.dataset.h || 680;
+      var s = Math.min(1, v.clientWidth / W);
+      b.style.transform = 'scale(' + s + ')';
+      v.style.height = (H * s) + 'px';
+    });
+  }
+  fit();
+  if ('ResizeObserver' in window){ new ResizeObserver(fit).observe(document.body); }
+  else { window.addEventListener('resize', fit); }
+})();
+</script>
+</body>
+</html>
