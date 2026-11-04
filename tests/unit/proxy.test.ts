@@ -36,6 +36,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+// TODO(#6): add a Playwright test that a signed-out browser opening /dashboard
+// lands on /login (docs/agent-memory/auth.md A8.7).
 describe("proxy optimistic auth check (docs/agent-memory/auth.md A9)", () => {
   it.each(["/dashboard", "/history", "/settings", "/history?cursor=abc"])(
     "redirects %s to /login when there is no auth cookie",
