@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Palette from OnYou_web_mockups.html. Components use the Tailwind tokens
+   below (bg-primary, text-danger, …), never raw hex (AGENTS.md §7). */
+:root {
+  --bg: #eef2e8;
+  --surface: #ffffff;
+  --ink: #1d2a23;
+  --muted: #56645b;
+  --line: #d3dccd;
+  --pine: #2e6a4e;
+  --pine-ink: #ffffff;
+  --apple: #c93a2e;
+  --leaf: #4f8f31;
+  --plum: #7e3352;
+  --tint: #e2ecda;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1712;
+    --surface: #1c2a22;
+    --ink: #e4eee2;
+    --muted: #a1b1a6;
+    --line: #2d3d34;
+    --pine: #73bc95;
+    --pine-ink: #0d1a12;
+    --apple: #e85a4c;
+    --leaf: #80bc5e;
+    --plum: #d683a3;
+    --tint: #22342a;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-tint: var(--tint);
+  --color-primary: var(--pine);
+  --color-primary-foreground: var(--pine-ink);
+  --color-danger: var(--plum);
+  --color-apple: var(--apple);
+  --color-success: var(--leaf);
+  --font-sans: var(--font-recursive), ui-rounded, system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--pine);
+  outline-offset: 2px;
+}
