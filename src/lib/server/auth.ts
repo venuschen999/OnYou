@@ -3,8 +3,6 @@ import { toPublicUser, type PublicUser } from "./authService";
 import { prisma } from "./db";
 import { AppError } from "./errors";
 
-const HTTP_UNAUTHORIZED = 401;
-
 function readCookie(request: Request, name: string): string | undefined {
   const header = request.headers.get("cookie") ?? "";
   const prefix = `${name}=`;
@@ -16,11 +14,7 @@ function readCookie(request: Request, name: string): string | undefined {
 }
 
 function unauthenticated(): AppError {
-  return new AppError(
-    "UNAUTHENTICATED",
-    HTTP_UNAUTHORIZED,
-    "Log in to continue.",
-  );
+  return new AppError("UNAUTHENTICATED", "Log in to continue.");
 }
 
 // PRD v2.9 §10: verify the JWT and its tokenVersion on every authenticated

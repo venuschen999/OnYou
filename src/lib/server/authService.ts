@@ -8,8 +8,6 @@ import { hashPassword, verifyPassword } from "./password";
 export type PublicUser = { id: string; email: string; timezone: string };
 export type AuthResult = { user: PublicUser; token: string };
 
-const HTTP_UNAUTHORIZED = 401;
-const HTTP_CONFLICT = 409;
 const UNIQUE_VIOLATION = "P2002";
 
 const EMAIL_IN_USE_MESSAGE = "An account with this email already exists.";
@@ -62,7 +60,7 @@ async function createUserWithPet(
   } catch (error) {
     // The LOWER(email) unique index also catches concurrent signups.
     if (!isUniqueViolation(error)) throw error;
-    throw new AppError("EMAIL_IN_USE", HTTP_CONFLICT, EMAIL_IN_USE_MESSAGE, {
+    throw new AppError("EMAIL_IN_USE", EMAIL_IN_USE_MESSAGE, {
       email: EMAIL_IN_USE_MESSAGE,
     });
   }
@@ -83,11 +81,7 @@ export async function logIn(input: LoginInput, now: Date): Promise<AuthResult> {
   const passwordHash = user?.passwordHash ?? (await getDummyHash());
   const isPasswordValid = await verifyPassword(input.password, passwordHash);
   if (!user || !isPasswordValid) {
-    throw new AppError(
-      "INVALID_CREDENTIALS",
-      HTTP_UNAUTHORIZED,
-      INVALID_CREDENTIALS_MESSAGE,
-    );
+    throw new AppError("INVALID_CREDENTIALS", INVALID_CREDENTIALS_MESSAGE);
   }
   return issueAuthResult(user, now);
 }

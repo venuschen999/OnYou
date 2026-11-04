@@ -1,91 +1,31 @@
-import { NextResponse } from "next/server";
-import type { z } from "zod";
+// AGENTS.md §9: each error code maps to exactly one HTTP status.
+const ERROR_STATUS = {
+  VALIDATION_ERROR: 400,
+  INVALID_CREDENTIALS: 401,
+  UNAUTHENTICATED: 401,
+  EMAIL_IN_USE: 409,
+  INTERNAL_ERROR: 500,
+} as const;
 
-// AGENTS.md §9 error codes used so far.
-export type ErrorCode =
-  | "VALIDATION_ERROR"
-  | "EMAIL_IN_USE"
-  | "INVALID_CREDENTIALS"
-  | "UNAUTHENTICATED"
-  | "INTERNAL_ERROR";
+export type ErrorCode = keyof typeof ERROR_STATUS;
 
 export type FieldErrors = Record<string, string>;
 
-type ErrorBody = {
-  error: { code: ErrorCode; message: string; fields?: FieldErrors };
-};
-
-const HTTP_BAD_REQUEST = 400;
-const HTTP_INTERNAL_ERROR = 500;
-
+// Thrown by services and helpers; handlers turn it into the standard error body.
 export class AppError extends Error {
+  readonly status: number;
+
   constructor(
     readonly code: ErrorCode,
-    readonly status: number,
     message: string,
     readonly fields?: FieldErrors,
   ) {
     super(message);
     this.name = "AppError";
+    this.status = ERROR_STATUS[code];
   }
 }
 
-function toFieldErrors(error: z.ZodError): FieldErrors {
-  const fields: FieldErrors = {};
-  for (const issue of error.issues) {
-    const field = String(issue.path[0] ?? "body");
-    fields[field] ??= issue.message;
-  }
-  return fields;
-}
-
-export function parseInput<Schema extends z.ZodTypeAny>(
-  schema: Schema,
-  input: unknown,
-): z.infer<Schema> {
-  const result = schema.safeParse(input);
-  if (result.success) return result.data;
-  throw new AppError(
-    "VALIDATION_ERROR",
-    HTTP_BAD_REQUEST,
-    "Check the highlighted fields and try again.",
-    toFieldErrors(result.error),
-  );
-}
-
-export async function readJsonBody(request: Request): Promise<unknown> {
-  try {
-    return await request.json();
-  } catch {
-    throw new AppError(
-      "VALIDATION_ERROR",
-      HTTP_BAD_REQUEST,
-      "Request body must be valid JSON.",
-    );
-  }
-}
-
-export function toErrorResponse(error: unknown): NextResponse<ErrorBody> {
-  if (error instanceof AppError) {
-    const fields = error.fields ? { fields: error.fields } : {};
-    return NextResponse.json(
-      { error: { code: error.code, message: error.message, ...fields } },
-      { status: error.status },
-    );
-  }
-  // AGENTS.md §12: never return internal errors. Log only the error name, not
-  // its message, which can contain request data.
-  console.error(
-    "Unhandled route error:",
-    error instanceof Error ? error.name : typeof error,
-  );
-  return NextResponse.json(
-    {
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "Something went wrong. Try again.",
-      },
-    },
-    { status: HTTP_INTERNAL_ERROR },
-  );
+export function getErrorStatus(code: ErrorCode): number {
+  return ERROR_STATUS[code];
 }

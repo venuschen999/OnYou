@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { logIn } from "@/lib/server/authService";
 import { buildAuthCookie } from "@/lib/server/authToken";
-import { parseInput, readJsonBody, toErrorResponse } from "@/lib/server/errors";
+import { parseInput, readJsonBody, toErrorResponse } from "@/lib/server/http";
 import { loginSchema } from "@/lib/validation/auth";
 
 // bcrypt is a native module; Route Handlers run on Node (AGENTS.md §2).
