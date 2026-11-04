@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
 import { findUserByAuthToken } from "./auth";
 import type { PublicUser } from "./authService";
 import { AUTH_COOKIE_NAME } from "./authToken";
-
-export const LOGIN_PATH = "/login";
-export const HOME_PATH = "/dashboard";
+import { ROUTES } from "@/lib/routes";
 
 // Server Components have no Request; they read the auth cookie via next/headers.
 async function getSessionUser(): Promise<PublicUser | null> {
@@ -16,7 +14,7 @@ async function getSessionUser(): Promise<PublicUser | null> {
 // Full check (JWT plus tokenVersion) for app pages (docs/agent-memory/auth.md A9).
 export async function requireUser(): Promise<PublicUser> {
   const user = await getSessionUser();
-  if (!user) redirect(LOGIN_PATH);
+  if (!user) redirect(ROUTES.login);
   return user;
 }
 
@@ -24,5 +22,5 @@ export async function requireUser(): Promise<PublicUser> {
 // redirect, so /login and /dashboard cannot bounce between each other.
 export async function redirectIfSignedIn(): Promise<void> {
   const user = await getSessionUser();
-  if (user) redirect(HOME_PATH);
+  if (user) redirect(ROUTES.home);
 }

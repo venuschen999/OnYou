@@ -1,13 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/server/authToken";
-
-const LOGIN_PATH = "/login";
-
-// App routes behind login (AGENTS.md §3, src/app/(app)/).
-const PROTECTED_PREFIXES = ["/dashboard", "/focus", "/history", "/settings"];
+import { PROTECTED_ROUTES, ROUTES } from "@/lib/routes";
 
 function isProtectedPath(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some(
+  return PROTECTED_ROUTES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
@@ -22,7 +18,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const claims = token ? await verifyAuthToken(token, new Date()) : null;
   if (claims) return NextResponse.next();
 
-  return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
+  return NextResponse.redirect(new URL(ROUTES.login, request.url));
 }
 
 export const config = {

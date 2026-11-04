@@ -7,6 +7,7 @@ import { Button } from "./ui/Button";
 import { ErrorMessage } from "./ui/ErrorMessage";
 import { Input } from "./ui/Input";
 import { Spinner } from "./ui/Spinner";
+import { ROUTES } from "@/lib/routes";
 
 type AuthFormProps = { mode: AuthMode };
 
@@ -18,7 +19,7 @@ const COPY = {
     pending: "Creating account…",
     footPrompt: "Already have an account?",
     footLink: "Log in",
-    footHref: "/login",
+    footHref: ROUTES.login,
   },
   login: {
     title: "Welcome back",
@@ -26,7 +27,7 @@ const COPY = {
     pending: "Logging in…",
     footPrompt: "New here?",
     footLink: "Create an account",
-    footHref: "/signup",
+    footHref: ROUTES.signup,
   },
 } as const;
 
@@ -40,7 +41,7 @@ function EmailInUseMessage({ message }: { message: string }): ReactNode {
   return (
     <>
       {message}{" "}
-      <Link href="/login" className={linkClass()}>
+      <Link href={ROUTES.login} className={linkClass()}>
         Log in
       </Link>{" "}
       instead.

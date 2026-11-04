@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { ApiError, logIn, signUp } from "@/lib/api/auth";
 import { loginSchema } from "@/lib/validation/auth";
+import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
 export type AuthMode = "login" | "signup";
 export type AuthField = "email" | "password";
@@ -11,10 +13,6 @@ type FieldErrors = Partial<Record<AuthField, string>>;
 
 // "credentials" errors describe both fields; "server" errors describe neither.
 export type FormError = { kind: "credentials" | "server"; message: string };
-
-export const HOME_PATH = "/dashboard";
-// docs/agent-memory/auth.md A8.6.
-export const SERVER_ERROR_MESSAGE = "Something went wrong. Try again.";
 
 function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -94,7 +92,7 @@ export function useAuthForm(mode: AuthMode) {
         await logIn(data);
       }
       // Stay disabled while navigating Home (US1: success goes to Home).
-      router.replace(HOME_PATH);
+      router.replace(ROUTES.home);
     } catch (error) {
       showRequestError(error);
       isInFlight.current = false;

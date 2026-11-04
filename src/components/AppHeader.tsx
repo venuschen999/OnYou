@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactElement } from "react";
+import { ROUTES } from "@/lib/routes";
 
 // AGENTS.md §7: nav is Home, History, Settings, including during a session.
 const NAV_ITEMS = [
-  { label: "Home", href: "/dashboard" },
-  { label: "History", href: "/history" },
-  { label: "Settings", href: "/settings" },
+  { label: "Home", href: ROUTES.home },
+  { label: "History", href: ROUTES.history },
+  { label: "Settings", href: ROUTES.settings },
 ] as const;
 
 function isCurrent(pathname: string, href: string): boolean {
