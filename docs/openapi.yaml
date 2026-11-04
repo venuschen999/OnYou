@@ -1,0 +1,335 @@
+openapi: 3.1.0
+info:
+  title: OnYou API
+  version: 0.1.0
+  description: >
+    Skeleton contract for the OnYou MVP. JSON uses camelCase. Timestamps are
+    ISO 8601 UTC. A focus session belongs to the account: any authenticated tab
+    of the owner may heartbeat, give up, or request completion. Protected
+    operations require that authenticated account. Resource field lists are
+    completed in a later revision.
+servers:
+  - url: /
+tags:
+  - name: Auth
+    description: Account access and password reset.
+  - name: Pet
+    description: The authenticated account's pet.
+  - name: Sessions
+    description: Account-owned focus sessions.
+paths:
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      operationId: signup
+      summary: Create an account and its default pet
+      responses:
+        "201":
+          description: The account and default pet were created.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Log in
+      description: >
+        A failed login uses one error and does not reveal whether the email
+        or the password was wrong.
+      responses:
+        "200":
+          description: The account is authenticated.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: The email or password is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Log out
+      description: >
+        Signing out stops heartbeats. Logging out during an Active session
+        abandons that session on every device.
+      responses:
+        "200":
+          description: The account is logged out.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/auth/password-reset/request:
+    post:
+      tags: [Auth]
+      operationId: requestPasswordReset
+      summary: Request a password reset
+      description: >
+        The response is the same whether or not the email matches an account.
+      responses:
+        "200":
+          description: The reset request was accepted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/auth/password-reset/confirm:
+    post:
+      tags: [Auth]
+      operationId: confirmPasswordReset
+      summary: Set a new password
+      description: >
+        A successful reset signs the account out everywhere. It does not
+        abandon an Active focus session by itself.
+      responses:
+        "200":
+          description: The password was updated.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/pet:
+    get:
+      tags: [Pet]
+      operationId: getPet
+      summary: Get the account pet
+      responses:
+        "200":
+          description: The authenticated account's pet.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Pet]
+      operationId: updatePet
+      summary: Rename the account pet
+      responses:
+        "200":
+          description: The updated pet.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/sessions:
+    get:
+      tags: [Sessions]
+      operationId: listSessions
+      summary: List focus history
+      description: >
+        Returns the authenticated account's Completed and Abandoned sessions,
+        newest first, 20 per page.
+      parameters:
+        - $ref: "#/components/parameters/HistoryCursor"
+        - $ref: "#/components/parameters/HistoryLimit"
+      responses:
+        "200":
+          description: One page of this account's focus history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionHistoryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Sessions]
+      operationId: startSession
+      summary: Start a focus session
+      description: >
+        Creates the account's single Active session and records the first
+        heartbeat. Start is rejected while another session is Active.
+      responses:
+        "201":
+          description: The Active session was created.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: This account already has an Active session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/sessions/active:
+    get:
+      tags: [Sessions]
+      operationId: getActiveSession
+      summary: Get the account's Active session
+      description: >
+        Any authenticated tab of the owner may read the same Active session.
+      responses:
+        "200":
+          description: The account's Active session.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/sessions/{id}/heartbeat:
+    post:
+      tags: [Sessions]
+      operationId: heartbeatSession
+      summary: Record a heartbeat
+      description: >
+        Any authenticated tab of the owner may send this request. A heartbeat
+        before the presence deadline renews it. A later heartbeat cannot revive
+        an Abandoned session.
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: The authoritative session state after resolution.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The session is already resolved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/sessions/{id}/complete:
+    post:
+      tags: [Sessions]
+      operationId: completeSession
+      summary: Complete a focus session
+      description: >
+        Any authenticated tab of the owner may request completion. Completion
+        before the scheduled end is rejected. Rewards are applied once.
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: The session was completed.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: >
+            The session cannot be completed because it is already resolved or
+            the scheduled end has not been reached.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/sessions/{id}/abandon:
+    post:
+      tags: [Sessions]
+      operationId: abandonSession
+      summary: Give up a focus session
+      description: >
+        Any authenticated tab of the owner may give up. Confirming before the
+        scheduled end abandons the session. Confirming after the scheduled end,
+        when presence was met, completes it.
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: The session was resolved.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The session is already resolved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  parameters:
+    SessionId:
+      name: id
+      in: path
+      required: true
+      description: Id of an account-owned focus session.
+      schema:
+        type: string
+    HistoryCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Id of the last session returned by the previous page.
+      schema:
+        type: string
+    HistoryLimit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. History pages contain 20 sessions.
+      schema:
+        type: integer
+        default: 20
+  schemas:
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Stable machine-readable error code.
+              examples: [SESSION_NOT_FOUND]
+            message:
+              type: string
+              description: Human-readable explanation.
+    SessionHistoryPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          description: >
+            Focus sessions for the authenticated account, newest first.
+            The fields of each session are specified in a later revision.
+          items:
+            type: object
+            additionalProperties: true
+            description: One history entry. Field list deferred.
+        nextCursor:
+          type: [string, "null"]
+          description: >
+            Session id to send as the cursor query parameter for the next page.
+            Null when there is no further page.
+  responses:
+    BadRequest:
+      description: The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: The request is not authenticated.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: The authenticated account does not own this session.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: No session exists with this id.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    TooManyRequests:
+      description: Password-reset requests are rate limited.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
