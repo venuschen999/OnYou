@@ -1,4 +1,9 @@
-// Data model for OnYou (PRD v2.9 §10). Models are added in #5.
+// Data model for OnYou (PRD v2.9 §10). All timestamps are timestamptz (UTC).
+//
+// Constraints Prisma cannot express live in raw SQL in the migration:
+// - one ACTIVE FocusSession per user (partial unique index, PRD v2.9 §5.1)
+// - case-insensitive unique email (PRD v2.9 §7)
+// - durationMinutes in (15, 25, 50) (PRD v2.9 §8 US5)
 
 generator client {
   provider = "prisma-client-js"
@@ -7,4 +12,68 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @db.VarChar(254)
+  passwordHash String
+  // IANA zone captured at signup and kept fixed (PRD v2.9 §6).
+  timezone     String
+  // Embedded in each JWT; password reset increments it (PRD v2.9 §10).
+  tokenVersion Int            @default(0)
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+  pet          Pet?
+  sessions     FocusSession[]
+}
+
+model Pet {
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  name      String         @default("Mochi") @db.VarChar(30)
+  // Coins only accumulate and never reset (PRD v2.9 §6).
+  coins     Int            @default(0)
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime       @updatedAt @db.Timestamptz(3)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedings  DailyFeeding[]
+}
+
+model FocusSession {
+  id                   String        @id @default(cuid())
+  userId               String
+  taskName             String        @db.VarChar(80)
+  durationMinutes      Int
+  status               SessionStatus @default(ACTIVE)
+  // Server-assigned; never accepted from the client (PRD v2.9 §10).
+  startTime            DateTime      @db.Timestamptz(3)
+  endTime              DateTime      @db.Timestamptz(3)
+  lastHeartbeatAt      DateTime      @db.Timestamptz(3)
+  // Stored so retries return the recorded outcome (PRD v2.9 §5.3).
+  coinsEarned          Int           @default(0)
+  feedingMinutesEarned Int           @default(0)
+  applesEarned         Int           @default(0)
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // History lists a user's sessions newest first (PRD v2.9 US8).
+  @@index([userId, startTime(sort: Desc)])
+}
+
+// One row per pet per feeding day; a day with no row means 0 minutes and 0 apples,
+// so the daily reset needs no job (PRD v2.9 §6).
+model DailyFeeding {
+  petId          String
+  feedingDay     DateTime @db.Date
+  feedingMinutes Int      @default(0)
+  apples         Int      @default(0)
+  pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@id([petId, feedingDay])
 }
