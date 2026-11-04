@@ -10,7 +10,9 @@ const CLAIMS = { userId: "user_123", tokenVersion: 0 };
 const LONG_AGO = new Date("2020-01-01T00:00:00.000Z");
 
 function requestFor(pathname: string, token?: string): NextRequest {
-  const headers = token ? { cookie: `${AUTH_COOKIE_NAME}=${token}` } : {};
+  const headers: Record<string, string> = token
+    ? { cookie: `${AUTH_COOKIE_NAME}=${token}` }
+    : {};
   return new NextRequest(`http://localhost${pathname}`, { headers });
 }
 
