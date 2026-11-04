@@ -4,8 +4,8 @@ import { buildAuthCookie } from "@/lib/server/authToken";
 import { parseInput, readJsonBody, toErrorResponse } from "@/lib/server/http";
 import { loginSchema } from "@/lib/validation/auth";
 
-// bcrypt is a native module; Route Handlers run on Node (AGENTS.md §2).
-export const runtime = "nodejs";
+// Runs on the default Node.js runtime, which bcrypt (a native module) needs
+// (AGENTS.md §2). `cacheComponents` forbids an explicit `runtime` export.
 
 export async function POST(request: Request): Promise<Response> {
   try {
