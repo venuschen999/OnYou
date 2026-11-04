@@ -4,8 +4,8 @@ import type { SessionStatus } from "@prisma/client";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { buildSession, buildUser } from "../factories";
 import { TEST_DATABASE_URL, resetTestDatabase, testPrisma } from "./testDb";
+import { PRISMA_BIN } from "./testEnv";
 
-const PRISMA_BIN = "node_modules/.bin/prisma";
 const MODEL_TABLES = ["DailyFeeding", "FocusSession", "Pet", "User"];
 const UNIQUE_VIOLATION = { code: "P2002" };
 

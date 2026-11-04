@@ -1,14 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { config } from "dotenv";
+import { requireTestDatabaseUrl } from "./testEnv";
 
-config({ quiet: true });
-
-const testDatabaseUrl = process.env.TEST_DATABASE_URL;
-if (!testDatabaseUrl) {
-  throw new Error("TEST_DATABASE_URL must be set to run integration tests");
-}
-
-export const TEST_DATABASE_URL: string = testDatabaseUrl;
+export const TEST_DATABASE_URL: string = requireTestDatabaseUrl();
 
 // Integration tests talk to the test database only, never DATABASE_URL.
 export const testPrisma = new PrismaClient({
