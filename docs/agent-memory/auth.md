@@ -57,3 +57,23 @@ Signup, login, JWT cookie, and timezone capture. PRD v2.9 US1, §7, §10 Securit
 - **Why:** Signing and verifying live in the same module; later endpoints (#10, #12, #14) need the check without waiting for #9.
 - **Applies to:** #8 (`src/lib/server/auth.ts`), #9 and every authenticated endpoint.
 - **Status:** Decided.
+
+## A8. Auth screens and protected routes (#9)
+
+Decided 2026-11-03 by Partner A (`venuschen999`) while planning #9. All are **Decided**.
+
+- **A8.1 No Forgot password link yet.** The login screen omits "Forgot password?" until #24/#25 build the page; #24 adds the link. *Why:* no dead links in Sprint 1.
+- **A8.2 Placeholder app pages.** Home at `/dashboard` (`src/app/(app)/dashboard`), History at `/history`, Settings at `/settings`, each with only the app header, one `h1`, and loading/error states. `/` redirects to `/dashboard`. Features arrive in #20, #23, #10. *Why:* the redirect target and nav links must exist; no feature stubs.
+- **A8.3 Signed-in users skip auth screens.** A user with a valid session who opens `/login` or `/signup` is redirected to `/dashboard`.
+- **A8.4 Logout is not in #9.** No logout endpoint or button until #18. *Why:* stay in scope.
+- **A8.5 Validate on submit.** Forms validate with the shared Zod schemas when submitted, show every field error at once, and clear a field's error when that field is edited.
+- **A8.6 Loading and error copy** (not in the mockup): submit buttons read "Creating account…" / "Logging in…", are disabled, and show a spinner while waiting. Network or 5xx failures show "Something went wrong. Try again."
+- **A8.7 Redirect is tested at the server level first.** Integration tests cover the proxy and server auth helper; a Playwright test is added with #6 (`TODO(#6)`).
+
+## A9. Two-layer route protection
+
+- **Decision:** `src/proxy.ts` (Next 16's renamed middleware) runs an *optimistic* check on app routes: if the auth cookie is missing or its JWT signature/expiry is invalid, it returns a 307 redirect to `/login`. It never queries the database. The `(app)` layout then runs the *full* check (JWT plus `tokenVersion` against the database) behind `<Suspense>` and redirects to `/login` if that fails.
+- **Why:** Next.js docs say Proxy must not hit the database (it runs on every route, including prefetches). With `cacheComponents`, reading cookies in a layout must sit behind `<Suspense>`, so the proxy gives a clean redirect before any HTML. The full check catches a password reset (`tokenVersion` changed).
+- **Loop guard:** The proxy does **not** redirect signed-in users away from `/login`; the login and signup pages do that with the full check (A8.3). Otherwise a stale-version token would bounce between `/login` and `/dashboard`.
+- **Date / decided by:** 2026-11-03, implementation choice within A7/A8 (Claude Code), reviewed by Partner A.
+- **Status:** Decided.
