@@ -1,0 +1,12 @@
+.next
+out
+build
+coverage
+node_modules
+package-lock.json
+next-env.d.ts
+# Product references and historical docs are kept byte-for-byte.
+docs
+*.md
+OnYou_web_mockups.html
+table.tsv
