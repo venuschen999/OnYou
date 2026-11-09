@@ -2,12 +2,15 @@ openapi: 3.1.0
 info:
   title: OnYou API
   version: 0.1.0
-  description: >
-    Skeleton contract for the OnYou MVP. JSON uses camelCase. Timestamps are
-    ISO 8601 UTC. A focus session belongs to the account: any authenticated tab
-    of the owner may heartbeat, give up, or request completion. Protected
-    operations require that authenticated account. Resource field lists are
-    completed in a later revision.
+  description: |
+    OnYou turns focus time into care for a virtual pet (PRD v2.9).
+    All bodies are JSON with camelCase fields; timestamps are ISO 8601 UTC.
+    Authentication is a JWT in the HttpOnly `onyou_auth` cookie.
+    A focus session belongs to the account: any authenticated tab of the
+    owner may heartbeat, give up, or request completion. Protected
+    operations require that authenticated account. Signup and login match
+    the implemented account API. Resource field lists for the remaining
+    paths are completed in a later revision.
 servers:
   - url: /
 tags:
@@ -21,32 +24,84 @@ paths:
   /api/auth/signup:
     post:
       tags: [Auth]
-      operationId: signup
-      summary: Create an account and its default pet
+      summary: Create an account and its default pet, Mochi
+      description: |
+        Creates the user and the pet in one transaction and signs the user in.
+        The email is trimmed and lowercased. A missing or unknown `timezone`
+        is stored as `America/Los_Angeles`. The timezone cannot be changed later.
+      operationId: signUp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
       responses:
         "201":
-          description: The account and default pet were created.
+          description: Account created and signed in.
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/AuthCookie"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
         "400":
-          $ref: "#/components/responses/BadRequest"
-  /api/auth/login:
-    post:
-      tags: [Auth]
-      operationId: login
-      summary: Log in
-      description: >
-        A failed login uses one error and does not reveal whether the email
-        or the password was wrong.
-      responses:
-        "200":
-          description: The account is authenticated.
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          description: The email or password is incorrect.
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          description: An account with this email already exists (case-insensitive).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: EMAIL_IN_USE
+                  message: An account with this email already exists.
+                  fields:
+                    email: An account with this email already exists.
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with email and password
+      description: |
+        Matches the email case-insensitively. A wrong email and a wrong
+        password return the same 401 response.
+      operationId: logIn
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Signed in.
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/AuthCookie"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: Email or password is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: INVALID_CREDENTIALS
+                  message: Email or password is incorrect. Check both and try again.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/auth/logout:
     post:
       tags: [Auth]
@@ -242,6 +297,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 components:
+  securitySchemes:
+    authCookie:
+      type: apiKey
+      in: cookie
+      name: onyou_auth
+  headers:
+    AuthCookie:
+      description: |
+        `onyou_auth=<JWT>; Path=/; Max-Age=604800; Secure; HttpOnly; SameSite=Lax`.
+        The JWT carries the user id and tokenVersion and expires after 7 days.
+      schema:
+        type: string
   parameters:
     SessionId:
       name: id
@@ -266,23 +333,77 @@ components:
         type: integer
         default: 20
   schemas:
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+      example: jo@school.edu
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 15
+      writeOnly: true
+      example: sunflower22
+    SignupRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        password:
+          $ref: "#/components/schemas/Password"
+        timezone:
+          type: string
+          description: IANA timezone from the browser. Falls back to America/Los_Angeles.
+          example: America/New_York
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        password:
+          $ref: "#/components/schemas/Password"
+    User:
+      type: object
+      required: [id, email, timezone]
+      properties:
+        id:
+          type: string
+        email:
+          $ref: "#/components/schemas/Email"
+        timezone:
+          type: string
+          example: America/New_York
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
     ErrorResponse:
       type: object
-      additionalProperties: false
       required: [error]
       properties:
         error:
           type: object
-          additionalProperties: false
           required: [code, message]
           properties:
             code:
               type: string
-              description: Stable machine-readable error code.
-              examples: [SESSION_NOT_FOUND]
+              enum:
+                - VALIDATION_ERROR
+                - EMAIL_IN_USE
+                - INVALID_CREDENTIALS
+                - UNAUTHENTICATED
+                - INTERNAL_ERROR
             message:
               type: string
-              description: Human-readable explanation.
+            fields:
+              type: object
+              description: Per-field messages for form display, keyed by field name.
+              additionalProperties:
+                type: string
     SessionHistoryPage:
       type: object
       additionalProperties: false
@@ -303,6 +424,24 @@ components:
             Session id to send as the cursor query parameter for the next page.
             Null when there is no further page.
   responses:
+    ValidationError:
+      description: The request body is not JSON or a field is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: Check the highlighted fields and try again.
+              fields:
+                password: Use 8 to 15 characters. This one has 3.
+    InternalError:
+      description: Unexpected server error. Internal details are never returned.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     BadRequest:
       description: The request failed validation.
       content:

@@ -53,7 +53,9 @@ describe("OpenAPI document", () => {
     const document = loadOpenApiDocument();
 
     expect(document).toContain("nextCursor");
-    expect(document).not.toMatch(/\b[a-z]+_[a-z0-9]+\b/);
+    // onyou_auth is the HttpOnly cookie name from the account API, not a JSON field.
+    const withoutCookieName = document.replaceAll("onyou_auth", "");
+    expect(withoutCookieName).not.toMatch(/\b[a-z]+_[a-z0-9]+\b/);
   });
 
   it("does not document X-Session-Token", () => {

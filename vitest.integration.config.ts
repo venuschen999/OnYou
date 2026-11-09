@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     include: ["tests/integration/**/*.test.ts"],
     globalSetup: ["tests/integration/globalSetup.ts"],
+    // Points the app's Prisma client and JWT secret at test values before imports.
+    setupFiles: ["tests/integration/setupEnv.ts"],
     // Files share one database, so they must not run concurrently.
     fileParallelism: false,
     environment: "node",
