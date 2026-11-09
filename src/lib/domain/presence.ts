@@ -30,3 +30,17 @@ export function decidePresence(input: PresenceInput): PresenceDecision {
   if (nowMs >= deadlineMs) return "ABANDON";
   return "ACTIVE";
 }
+
+export type SessionResolution = "ABANDON" | "RENEW" | "HOLD";
+
+// Shared order for every session operation (PRD v2.9 §10): `decidePresence`
+// checks the scheduled end before a later expiry, and an expired heartbeat is
+// not renewed. HOLD leaves the row Active so #15 can store Completed and
+// rewards in one update.
+export function planSessionResolution(input: PresenceInput): SessionResolution {
+  if (decidePresence(input) === "ABANDON") return "ABANDON";
+  if (input.now.getTime() < presenceDeadline(input.lastHeartbeatAt).getTime()) {
+    return "RENEW";
+  }
+  return "HOLD";
+}
