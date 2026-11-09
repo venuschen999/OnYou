@@ -17,12 +17,16 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "bcrypt": "6.0.0",
+    "jose": "6.2.15",
     "next": "16.4.5",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@types/bcrypt": "6.0.0",
     "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
