@@ -65,4 +65,15 @@ describe("OpenAPI document", () => {
     expect(document).not.toContain("sessionStorage");
     expect(document).not.toContain("SessionElsewhereNotice");
   });
+
+  it("documents POST /api/sessions with ACTIVE_SESSION_EXISTS (#12)", () => {
+    const document = loadOpenApiDocument();
+
+    expect(document).toMatch(/^ {2}\/api\/sessions:\n(?: {4}.+\n)* {4}post:/m);
+    expect(document).toContain("ACTIVE_SESSION_EXISTS");
+    expect(document).toContain("One session at a time");
+    expect(document).toContain("lastHeartbeatAt");
+    expect(document).not.toContain("completionToken");
+    expect(document).not.toContain("tokenHash");
+  });
 });
