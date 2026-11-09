@@ -86,6 +86,15 @@ describe("signupSchema password (PRD v2.9 §7)", () => {
       "Use 8 to 15 characters. This one has 3.",
     );
   });
+
+  it("counts an emoji as one character, not two UTF-16 units", () => {
+    expect(
+      signupSchema.safeParse(signupInput({ password: "aaaaaaa🔒" })).success,
+    ).toBe(true);
+    expect(firstIssueMessage(signupInput({ password: "aaaaaa🔒" }))).toBe(
+      "Use 8 to 15 characters. This one has 7.",
+    );
+  });
 });
 
 describe("signupSchema timezone (PRD v2.9 §6; docs/agent-memory/auth.md A2)", () => {
@@ -106,6 +115,27 @@ describe("signupSchema timezone (PRD v2.9 §6; docs/agent-memory/auth.md A2)", (
       signupInput({ timezone: "Mars/Olympus" }),
     );
     expect(result.timezone).toBe(DEFAULT_TIMEZONE);
+  });
+
+  it("falls back to Pacific time when the timezone is blank", () => {
+    expect(signupSchema.parse(signupInput({ timezone: "   " })).timezone).toBe(
+      DEFAULT_TIMEZONE,
+    );
+  });
+
+  it("falls back to Pacific time when the timezone is not a string", () => {
+    expect(signupSchema.parse(signupInput({ timezone: 480 })).timezone).toBe(
+      DEFAULT_TIMEZONE,
+    );
+  });
+
+  it.each([
+    ["US/Pacific", "America/Los_Angeles"],
+    ["asia/tokyo", "Asia/Tokyo"],
+  ])("stores %s as the canonical IANA zone %s", (input, canonical) => {
+    expect(signupSchema.parse(signupInput({ timezone: input })).timezone).toBe(
+      canonical,
+    );
   });
 });
 
