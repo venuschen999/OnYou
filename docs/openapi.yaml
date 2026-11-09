@@ -8,9 +8,9 @@ info:
     Authentication is a JWT in the HttpOnly `onyou_auth` cookie.
     A focus session belongs to the account: any authenticated tab of the
     owner may heartbeat, give up, or request completion. Protected
-    operations require that authenticated account. Signup and login match
-    the implemented account API. Resource field lists for the remaining
-    paths are completed in a later revision.
+    operations require that authenticated account. Signup, login, and
+    starting a session match the implemented API. Resource field lists for
+    the remaining paths are completed in a later revision.
 servers:
   - url: /
 tags:
@@ -190,11 +190,29 @@ paths:
       operationId: startSession
       summary: Start a focus session
       description: >
-        Creates the account's single Active session and records the first
-        heartbeat. Start is rejected while another session is Active.
+        Creates the account's single Active session. The server sets
+        startTime, endTime, and lastHeartbeatAt. lastHeartbeatAt is the
+        first heartbeat. The response does not include a completion token.
+        A blank task name is stored as "Focus session". Start is rejected
+        while another session is still Active, including one whose presence
+        was met and whose scheduled end has passed. A session whose presence
+        deadline passed at or before the scheduled end is Abandoned with zero
+        rewards before the new session is created.
+      security:
+        - authCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartSessionRequest"
       responses:
         "201":
           description: The Active session was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FocusSession"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -205,6 +223,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: ACTIVE_SESSION_EXISTS
+                  message: One session at a time
   /api/sessions/active:
     get:
       tags: [Sessions]
@@ -381,6 +403,59 @@ components:
       properties:
         user:
           $ref: "#/components/schemas/User"
+    StartSessionRequest:
+      type: object
+      required: [durationMinutes]
+      properties:
+        taskName:
+          type: string
+          maxLength: 80
+          description: >
+            Optional. Trimmed. Blank becomes "Focus session". A name over 80
+            characters is rejected.
+        durationMinutes:
+          type: integer
+          enum: [15, 25, 50]
+    FocusSession:
+      type: object
+      required:
+        - id
+        - taskName
+        - durationMinutes
+        - status
+        - startTime
+        - endTime
+        - lastHeartbeatAt
+        - coinsEarned
+        - feedingMinutesEarned
+        - applesEarned
+      properties:
+        id:
+          type: string
+        taskName:
+          type: string
+          example: Essay draft: intro
+        durationMinutes:
+          type: integer
+          enum: [15, 25, 50]
+        status:
+          type: string
+          enum: [ACTIVE, COMPLETED, ABANDONED]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+        coinsEarned:
+          type: integer
+        feedingMinutesEarned:
+          type: integer
+        applesEarned:
+          type: integer
     ErrorResponse:
       type: object
       required: [error]
@@ -396,6 +471,7 @@ components:
                 - EMAIL_IN_USE
                 - INVALID_CREDENTIALS
                 - UNAUTHENTICATED
+                - ACTIVE_SESSION_EXISTS
                 - INTERNAL_ERROR
             message:
               type: string

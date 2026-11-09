@@ -10,6 +10,7 @@ Product and technical decisions the team made while working with coding agents, 
 | --- | --- | --- |
 | [auth.md](auth.md) | Signup, login, JWT cookie, timezone capture | #8, #9 |
 | [pet.md](pet.md) | Default pet (Mochi) creation and naming | #8, #10 |
+| [sessions.md](sessions.md) | Start session, presence, one active session | #12, #14, #15 |
 | [workflow.md](workflow.md) | Branching, PRs, and repo process | — |
 
 ## Entry format
