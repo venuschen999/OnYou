@@ -17,3 +17,9 @@ Branching, PRs, and repo process. `AGENTS.md` §10.
 - **Why:** `next.config.ts` enables `cacheComponents`, and Next.js 16 rejects any `runtime` segment config with it. Unit and integration tests import handlers directly, so only `npm run build` catches this; run it before opening a PR.
 - **Applies to:** Every `src/app/api/**/route.ts`.
 - **Status:** Decided.
+
+## W3. #9 is stacked on #8
+
+- **Decision:** `feature/9-auth-screens` branches from `feature/8-auth-signup-login`. Its PR targets `feature/8-auth-signup-login` until #35 merges, then is retargeted to `main` (W1).
+- **Date / decided by:** 2026-11-03, Partner A (`venuschen999`).
+- **Status:** Decided.

@@ -19,19 +19,26 @@ function unauthenticated(): AppError {
 
 // PRD v2.9 §10: verify the JWT and its tokenVersion on every authenticated
 // request, so a password reset signs out every device (auth.md A7).
+export async function findUserByAuthToken(
+  token: string | undefined,
+  now: Date,
+): Promise<PublicUser | null> {
+  if (!token) return null;
+
+  const claims = await verifyAuthToken(token, now);
+  if (!claims) return null;
+
+  const user = await prisma.user.findUnique({ where: { id: claims.userId } });
+  if (!user || user.tokenVersion !== claims.tokenVersion) return null;
+  return toPublicUser(user);
+}
+
 export async function getAuthenticatedUser(
   request: Request,
   now: Date,
 ): Promise<PublicUser> {
   const token = readCookie(request, AUTH_COOKIE_NAME);
-  if (!token) throw unauthenticated();
-
-  const claims = await verifyAuthToken(token, now);
-  if (!claims) throw unauthenticated();
-
-  const user = await prisma.user.findUnique({ where: { id: claims.userId } });
-  if (!user || user.tokenVersion !== claims.tokenVersion) {
-    throw unauthenticated();
-  }
-  return toPublicUser(user);
+  const user = await findUserByAuthToken(token, now);
+  if (!user) throw unauthenticated();
+  return user;
 }
