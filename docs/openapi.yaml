@@ -245,26 +245,48 @@ paths:
       operationId: heartbeatSession
       summary: Record a heartbeat
       description: >
-        Any authenticated tab of the owner may send this request. A heartbeat
-        before the presence deadline renews it. A later heartbeat cannot revive
-        an Abandoned session.
+        Any authenticated tab of the owner may send this request. The server
+        resolves the session from stored timestamps before it renews
+        lastHeartbeatAt. A heartbeat before the presence deadline renews it.
+        If that deadline has passed at or before the scheduled end, the session
+        is Abandoned and a later heartbeat cannot revive it. A session whose
+        presence deadline is strictly after the scheduled end stays Active
+        until completion stores the rewards; this endpoint does not mark it
+        Completed. An already resolved session returns its stored state. The
+        request body is ignored. No completion token is used.
+      security:
+        - authCookie: []
       parameters:
         - $ref: "#/components/parameters/SessionId"
       responses:
         "200":
           description: The authoritative session state after resolution.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FocusSession"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: The session is already resolved.
+          description: The authenticated account does not own this session.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: FORBIDDEN
+                  message: That session belongs to another account.
+        "404":
+          description: No session exists with this id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: SESSION_NOT_FOUND
+                  message: No session exists with that id.
   /api/sessions/{id}/complete:
     post:
       tags: [Sessions]
@@ -471,6 +493,8 @@ components:
                 - EMAIL_IN_USE
                 - INVALID_CREDENTIALS
                 - UNAUTHENTICATED
+                - FORBIDDEN
+                - SESSION_NOT_FOUND
                 - ACTIVE_SESSION_EXISTS
                 - INTERNAL_ERROR
             message:

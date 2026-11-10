@@ -76,4 +76,20 @@ describe("OpenAPI document", () => {
     expect(document).not.toContain("completionToken");
     expect(document).not.toContain("tokenHash");
   });
+
+  it("documents POST /api/sessions/{id}/heartbeat as the stored session state (#14)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions/{id}/heartbeat:");
+    const end = document.indexOf("  /api/sessions/{id}/complete:");
+    const heartbeat = document.slice(start, end);
+
+    expect(heartbeat).toContain("operationId: heartbeatSession");
+    expect(heartbeat).toContain("authCookie");
+    expect(heartbeat).toContain('$ref: "#/components/schemas/FocusSession"');
+    expect(heartbeat).toContain("SESSION_NOT_FOUND");
+    expect(heartbeat).toContain("FORBIDDEN");
+    expect(heartbeat).toContain("authoritative session state");
+    expect(heartbeat).not.toMatch(/"409"/);
+    expect(heartbeat).not.toContain("X-Session-Token");
+  });
 });

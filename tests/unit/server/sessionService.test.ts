@@ -15,8 +15,10 @@ const INPUT: StartSessionInput = {
 
 const { prisma, tx } = vi.hoisted(() => {
   const tx = {
+    $queryRaw: vi.fn(),
     focusSession: {
       findFirst: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       updateMany: vi.fn(),
       create: vi.fn(),
     },
@@ -61,9 +63,22 @@ beforeEach(() => {
     }
     return callback(tx);
   });
+  tx.$queryRaw.mockReset();
+  tx.$queryRaw.mockResolvedValue([]);
   tx.focusSession.findFirst.mockReset();
   tx.focusSession.updateMany.mockReset();
   tx.focusSession.create.mockReset();
+  tx.focusSession.findUniqueOrThrow.mockReset();
+  // Start locks the row it already found and reads it again before resolving.
+  tx.focusSession.findUniqueOrThrow.mockImplementation(() => {
+    const last = tx.focusSession.findFirst.mock.results.at(-1);
+    if (!last || last.type !== "return") {
+      return Promise.reject(
+        new Error("expected the active session to be loaded"),
+      );
+    }
+    return last.value;
+  });
 });
 
 describe("startSession (US5, #12)", () => {
