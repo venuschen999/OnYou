@@ -92,4 +92,16 @@ describe("OpenAPI document", () => {
     expect(heartbeat).not.toMatch(/"409"/);
     expect(heartbeat).not.toContain("X-Session-Token");
   });
+
+  it("documents GET /api/sessions/active as the session or null (#13)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions/active:");
+    const end = document.indexOf("  /api/sessions/{id}/heartbeat:");
+    const activeRoute = document.slice(start, end);
+
+    expect(activeRoute).toContain("operationId: getActiveSession");
+    expect(activeRoute).toContain("authCookie");
+    expect(activeRoute).toContain('$ref: "#/components/schemas/FocusSession"');
+    expect(activeRoute).toContain('type: "null"');
+  });
 });
