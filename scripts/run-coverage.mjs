@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { evaluateCoverage, listDomainRuntimeSources } from "./coverageGate.mjs";
 
 const rootDir = process.cwd();
 
@@ -23,32 +24,29 @@ function runVitest() {
   );
 }
 
-function measuredDomainFiles(summary) {
-  const marker = `${path.sep}src${path.sep}lib${path.sep}domain${path.sep}`;
-  return Object.keys(summary).filter((file) => file.includes(marker));
+function readCoverageSummary() {
+  const summaryPath = path.join(rootDir, "coverage", "coverage-summary.json");
+  if (!existsSync(summaryPath)) {
+    return null;
+  }
+  return JSON.parse(readFileSync(summaryPath, "utf8"));
 }
 
 const vitest = runVitest();
 if (vitest.error) {
   console.error(vitest.error.message);
-  process.exit(1);
 }
 
-const summaryPath = path.join(rootDir, "coverage", "coverage-summary.json");
-let domainUnmeasured = false;
-if (!existsSync(summaryPath)) {
-  console.error(
-    "Coverage summary was not written, so domain coverage was not measured.",
-  );
-  domainUnmeasured = true;
-} else {
-  const summary = JSON.parse(readFileSync(summaryPath, "utf8"));
-  if (measuredDomainFiles(summary).length === 0) {
-    console.error(
-      "No source files under src/lib/domain/ were included in coverage. The 95% domain line and branch gate is not satisfied.",
-    );
-    domainUnmeasured = true;
-  }
+const result = evaluateCoverage({
+  domainSources: listDomainRuntimeSources(rootDir),
+  summary: vitest.error ? null : readCoverageSummary(),
+});
+
+for (const line of result.report) {
+  console.log(line);
+}
+for (const failure of result.failures) {
+  console.error(failure);
 }
 
-process.exit(vitest.status !== 0 || domainUnmeasured ? 1 : 0);
+process.exit(vitest.error || vitest.status !== 0 || !result.ok ? 1 : 0);

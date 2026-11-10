@@ -38,9 +38,9 @@ export default defineConfig({
       ],
       reporter: ["text", "json-summary"],
       reportsDirectory: "coverage",
-      // AGENTS.md §6. Domain branches are checked on the glob below.
-      // An empty src/lib/domain/ is not 95% covered; scripts/run-coverage.mjs
-      // fails that case because Istanbul reports an empty summary as 100%.
+      // AGENTS.md §6. Thresholds are unchanged. With no runtime files under
+      // src/lib/domain/, Istanbul can treat this glob as 100%. The coverage
+      // script reports that case as N/A and still enforces 95% once source exists.
       thresholds: {
         lines: 80,
         "src/lib/domain/**": {

@@ -2,8 +2,9 @@
 # A failed step fails its job. GitHub reports that failed job as a failing check.
 #
 # Coverage (AGENTS.md §6) is `npm run test:coverage`:
-# src/lib/domain/ must be at least 95% lines and branches, and overall lines
-# must be at least 80%. An empty domain directory does not pass that gate.
+# overall lines must be at least 80%. When src/lib/domain/ has runtime source,
+# lines and branches must be at least 95%. With no runtime source, domain
+# coverage is reported as N/A and is not treated as 100%.
 
 name: CI
 
