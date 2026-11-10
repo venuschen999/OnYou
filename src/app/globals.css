@@ -14,6 +14,8 @@
   --leaf: #4f8f31;
   --plum: #7e3352;
   --tint: #e2ecda;
+  --peach: #f3d2b3;
+  --peach-dark: #c99671;
   color-scheme: light;
 }
 
@@ -30,6 +32,8 @@
     --leaf: #80bc5e;
     --plum: #d683a3;
     --tint: #22342a;
+    --peach: #ebc6a4;
+    --peach-dark: #c08d66;
     color-scheme: dark;
   }
 }
@@ -57,4 +61,11 @@ body {
 :focus-visible {
   outline: 3px solid var(--pine);
   outline-offset: 2px;
+}
+
+.countdown-digits {
+  font-variant-numeric: tabular-nums;
+  font-variation-settings:
+    "MONO" 1,
+    "CASL" 0;
 }

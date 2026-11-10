@@ -31,7 +31,15 @@ Starting a focus session. PRD v2.9 §§5–7; `AGENTS.md` §8 and §9.
 - **Decision:** `GET /api/sessions/active` is not part of #12. It is also not part of #14 until the team confirms it. Issue #14's acceptance criteria do not list the route. A later implementation must run the shared presence resolver before returning the account's Active session.
 - **Date / decided by:** 2026-11-09, Partner B (`CollinsCao`).
 - **Applies to:** #12, #14.
-- **Status:** Open. Proposed contract is in the #14 work notes; the route is not implemented.
+- **Status:** Superseded by S7.
+
+## S7. Active session read returns the row or null
+
+- **Decision:** `GET /api/sessions/active` is part of #13 because US5 joins a tab through that route. The caller must be authenticated. The handler runs `resolveSession` before it responds and does not renew `lastHeartbeatAt`. `200` with the `FocusSession` body when an `ACTIVE` row remains, including a presence-met session past `endTime` that #15 has not completed. `200` with JSON `null` when the account has no `ACTIVE` session, including when resolution just abandoned a lapsed one. `401` when the caller is not authenticated. No other account's session is visible.
+- **Date / decided by:** 2026-11-09, Partner B (`CollinsCao`).
+- **Why:** AGENTS.md §9 lists the route under US5, and the OpenAPI skeleton named `200` and `401` without an empty body. `null` keeps the success status the skeleton already documented. `404` would collide with a missing session id on the other session routes.
+- **Applies to:** #13 (`getActiveSession`, `docs/openapi.yaml`).
+- **Status:** Decided.
 
 ## S5. Heartbeat does not mark a presence-met session Completed
 

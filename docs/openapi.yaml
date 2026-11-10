@@ -234,9 +234,23 @@ paths:
       summary: Get the account's Active session
       description: >
         Any authenticated tab of the owner may read the same Active session.
+        The server resolves presence before it responds. A session whose
+        presence deadline passed at or before the scheduled end is Abandoned
+        and is not returned. A session that stayed present through its
+        scheduled end stays Active until completion stores the rewards.
+        The JSON body is null when the account has no Active session.
+        This read does not renew lastHeartbeatAt. No completion token is used.
+      security:
+        - authCookie: []
       responses:
         "200":
-          description: The account's Active session.
+          description: The account's Active session, or null when none is Active.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/FocusSession"
+                  - type: "null"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /api/sessions/{id}/heartbeat:
