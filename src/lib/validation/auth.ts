@@ -8,8 +8,13 @@ export const PASSWORD_MAX_LENGTH = 15;
 // docs/agent-memory/auth.md A2: a missing or unknown browser zone falls back to Pacific time.
 export const DEFAULT_TIMEZONE = "America/Los_Angeles";
 
+function requiredMessage(message: string) {
+  return (issue: { input?: unknown }) =>
+    issue.input === undefined ? message : undefined;
+}
+
 export const emailSchema = z
-  .string({ required_error: "Enter your email." })
+  .string({ error: requiredMessage("Enter your email.") })
   .trim()
   // auth.md A4: one stored form keeps lookups simple and matches the LOWER(email) index.
   .toLowerCase()
@@ -21,7 +26,7 @@ export const emailSchema = z
   .email("Enter a valid email address.");
 
 export const passwordSchema = z
-  .string({ required_error: "Enter a password." })
+  .string({ error: requiredMessage("Enter a password.") })
   .superRefine((value, context) => {
     // Count characters, not UTF-16 units, so an emoji counts as one.
     const length = Array.from(value).length;
@@ -43,8 +48,11 @@ function toCanonicalTimeZone(value: unknown): string | undefined {
   }
 }
 
+// Zod 4 does not pass a missing object key through z.unknown(). optional()
+// keeps an omitted timezone on the same fallback path as an invalid one.
 export const timezoneSchema = z
   .unknown()
+  .optional()
   .transform((value) => toCanonicalTimeZone(value) ?? DEFAULT_TIMEZONE);
 
 export const signupSchema = z.object({

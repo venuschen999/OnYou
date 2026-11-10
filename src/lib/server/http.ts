@@ -29,7 +29,7 @@ export async function readJsonBody(request: Request): Promise<unknown> {
   }
 }
 
-export function parseInput<Schema extends z.ZodTypeAny>(
+export function parseInput<Schema extends z.ZodType>(
   schema: Schema,
   input: unknown,
 ): z.infer<Schema> {

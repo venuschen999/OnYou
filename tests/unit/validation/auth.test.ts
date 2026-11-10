@@ -39,10 +39,22 @@ describe("signupSchema email (PRD v2.9 §7)", () => {
     expect(result.email).toBe("jo@school.edu");
   });
 
+  it("asks for an email when the field is omitted", () => {
+    const { password, timezone } = signupInput();
+    expect(firstIssueMessage({ password, timezone })).toBe("Enter your email.");
+  });
+
   it("rejects a blank email", () => {
     expect(signupSchema.safeParse(signupInput({ email: "  " })).success).toBe(
       false,
     );
+  });
+
+  it("rejects a non-string email without treating it as a missing field", () => {
+    const result = signupSchema.safeParse(signupInput({ email: 12 }));
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues[0]?.message).not.toBe("Enter your email.");
   });
 
   it("rejects a malformed email", () => {
@@ -81,9 +93,23 @@ describe("signupSchema password (PRD v2.9 §7)", () => {
     expect(result.success).toBe(false);
   });
 
+  it("asks for a password when the field is omitted", () => {
+    const { email, timezone } = signupInput();
+    expect(firstIssueMessage({ email, timezone })).toBe("Enter a password.");
+  });
+
   it("states the allowed range and the actual length (mockup copy)", () => {
     expect(firstIssueMessage(signupInput({ password: "sun" }))).toBe(
       "Use 8 to 15 characters. This one has 3.",
+    );
+  });
+
+  it("counts an emoji as one character, not two UTF-16 units", () => {
+    expect(
+      signupSchema.safeParse(signupInput({ password: "aaaaaaa🔒" })).success,
+    ).toBe(true);
+    expect(firstIssueMessage(signupInput({ password: "aaaaaa🔒" }))).toBe(
+      "Use 8 to 15 characters. This one has 7.",
     );
   });
 });
@@ -106,6 +132,27 @@ describe("signupSchema timezone (PRD v2.9 §6; docs/agent-memory/auth.md A2)", (
       signupInput({ timezone: "Mars/Olympus" }),
     );
     expect(result.timezone).toBe(DEFAULT_TIMEZONE);
+  });
+
+  it("falls back to Pacific time when the timezone is blank", () => {
+    expect(signupSchema.parse(signupInput({ timezone: "   " })).timezone).toBe(
+      DEFAULT_TIMEZONE,
+    );
+  });
+
+  it("falls back to Pacific time when the timezone is not a string", () => {
+    expect(signupSchema.parse(signupInput({ timezone: 480 })).timezone).toBe(
+      DEFAULT_TIMEZONE,
+    );
+  });
+
+  it.each([
+    ["US/Pacific", "America/Los_Angeles"],
+    ["asia/tokyo", "Asia/Tokyo"],
+  ])("stores %s as the canonical IANA zone %s", (input, canonical) => {
+    expect(signupSchema.parse(signupInput({ timezone: input })).timezone).toBe(
+      canonical,
+    );
   });
 });
 
