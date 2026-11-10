@@ -26,7 +26,8 @@ export default defineConfig({
     passWithNoTests: process.env.COVERAGE_ALLOW_EMPTY_SUITE === "1",
     coverage: {
       provider: "v8",
-      all: true,
+      // Vitest 5 dropped `coverage.all`. Files matched by `include` are still
+      // reported when no test imports them, so the 80% line gate stays honest.
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "**/*.test.ts",

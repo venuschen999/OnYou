@@ -39,10 +39,22 @@ describe("signupSchema email (PRD v2.9 §7)", () => {
     expect(result.email).toBe("jo@school.edu");
   });
 
+  it("asks for an email when the field is omitted", () => {
+    const { password, timezone } = signupInput();
+    expect(firstIssueMessage({ password, timezone })).toBe("Enter your email.");
+  });
+
   it("rejects a blank email", () => {
     expect(signupSchema.safeParse(signupInput({ email: "  " })).success).toBe(
       false,
     );
+  });
+
+  it("rejects a non-string email without treating it as a missing field", () => {
+    const result = signupSchema.safeParse(signupInput({ email: 12 }));
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues[0]?.message).not.toBe("Enter your email.");
   });
 
   it("rejects a malformed email", () => {
@@ -79,6 +91,11 @@ describe("signupSchema password (PRD v2.9 §7)", () => {
       signupInput({ password: "p".repeat(length) }),
     );
     expect(result.success).toBe(false);
+  });
+
+  it("asks for a password when the field is omitted", () => {
+    const { email, timezone } = signupInput();
+    expect(firstIssueMessage({ email, timezone })).toBe("Enter a password.");
   });
 
   it("states the allowed range and the actual length (mockup copy)", () => {

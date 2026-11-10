@@ -53,6 +53,19 @@ describe("parseInput", () => {
     ).toEqual({ email: "jo@school.edu", password: "sunflower22" });
   });
 
+  it("reports the required message when email is omitted", () => {
+    try {
+      parseInput(loginSchema, { password: "sunflower22" });
+      throw new Error("expected validation to fail");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "VALIDATION_ERROR",
+        status: 400,
+        fields: { email: "Enter your email." },
+      });
+    }
+  });
+
   it("rejects invalid input with the standard message and field errors", () => {
     expect(() =>
       parseInput(loginSchema, { email: "not-an-email", password: "short" }),
@@ -114,7 +127,10 @@ describe("parseInput", () => {
   });
 
   it("uses body when an issue has no field path", () => {
-    const schema = z.string({ required_error: "Enter a value." });
+    const schema = z.string({
+      error: (issue) =>
+        issue.input === undefined ? "Enter a value." : undefined,
+    });
 
     try {
       parseInput(schema, undefined);

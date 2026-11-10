@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Historical HW3 evidence snapshots, not application code (AGENTS.md §0).
     "docs/**",
+    // Nested git worktree for another branch. It is not part of this app.
+    "OnYou-issue7/**",
   ]),
 ]);
 
