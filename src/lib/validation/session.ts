@@ -12,8 +12,15 @@ function taskNameMessage(length: number): string {
   return `Task names can be up to ${TASK_NAME_MAX_LENGTH} characters. This one has ${length}.`;
 }
 
+// Zod 4 replaced invalid_type_error. Return undefined so later checks keep
+// their own messages (same pattern as auth.ts).
+function invalidTypeMessage(message: string) {
+  return (issue: { code?: string }) =>
+    issue.code === "invalid_type" ? message : undefined;
+}
+
 const taskNameSchema = z
-  .string({ invalid_type_error: "Task name must be text." })
+  .string({ error: invalidTypeMessage("Task name must be text.") })
   .optional()
   .superRefine((value, context) => {
     if (value === undefined) return;
@@ -31,8 +38,7 @@ const taskNameSchema = z
 
 const durationSchema = z
   .number({
-    required_error: DURATION_MESSAGE,
-    invalid_type_error: DURATION_MESSAGE,
+    error: invalidTypeMessage(DURATION_MESSAGE),
   })
   .refine(
     (value): value is DurationMinutes =>

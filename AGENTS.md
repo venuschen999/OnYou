@@ -1,7 +1,7 @@
 # AGENTS.md — OnYou
 
 <!--
-  Version 5. Cursor loads this file from the project root.
+  Version 6. Cursor loads this file from the project root.
   Product source of truth: PRD v2.9 (`OnYou_PRD_v2_9.md`) and `OnYou_web_mockups.html`.
   This file states invariants and engineering constraints. Screen copy and story detail stay in the PRD, the mockups, and the linked issue.
   When the agent repeats a mistake, add a short rule in that PR and log it in Section 14.
@@ -37,9 +37,9 @@ This table is the technical specification. PRD v2.9 §10 names the areas; do not
 | --- | --- |
 | Language / runtime | TypeScript 5.x (`strict: true`); Node.js 22 LTS. Route Handlers run on Node, never Edge |
 | App | Next.js 16.x App Router, Server Components by default; React 19.x function components and hooks; Tailwind CSS 4.x |
-| Data | PostgreSQL 16 (Neon; branch per preview); Prisma 6.x (migrations committed with each PR) |
-| Auth, validation, email | `jose` (JWT in an HttpOnly cookie), `bcrypt`; Zod 3.x shared by client and server; Resend, password reset only |
-| Tests | Vitest 3.x + `@vitest/coverage-v8`; React Testing Library; Playwright 1.x |
+| Data | PostgreSQL 16 (Neon; branch per preview); Prisma 7.x with `@prisma/adapter-pg` (migrations committed with each PR) |
+| Auth, validation, email | `jose` (JWT in an HttpOnly cookie), `bcrypt`; Zod 4.x shared by client and server; Resend, password reset only |
+| Tests | Vitest 5.x + `@vitest/coverage-v8`; React Testing Library; Playwright 1.x |
 | Docs, lint, CI, host | OpenAPI 3.1 and Swagger UI (`docs/openapi.yaml`); ESLint and Prettier; GitHub Actions (lint, typecheck, tests, CodeQL, `npm audit`); Vercel (preview per PR, production from `main`) |
 
 No WebSocket library. Heartbeats are authenticated HTTP `fetch` requests.
@@ -245,3 +245,4 @@ Both partners edit this file. Add a short, testable rule in the PR where the nee
 | 2026-10-27 | 3 | B | PRD v2.9: account-owned sessions, heartbeats, mockups, Mochi; ban sessionStorage completion tokens |
 | 2026-10-27 | 4 | B | After Issue #11: token vs label map; red–green–refactor evidence; no no-op unused parameters |
 | 2026-10-28 | 5 | B | Condensed. Invariants and v4 refinements kept; duplicated PRD and mockup detail now linked |
+| 2026-11-09 | 6 | B | Issue #4: pin Zod 4.x, Prisma 7.x with the `pg` adapter, and Vitest 5.x |

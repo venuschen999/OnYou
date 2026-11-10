@@ -46,20 +46,23 @@ describe("first migration (#5)", () => {
       ORDER BY table_name`;
     expect(tables.map((row) => row.table_name)).toEqual(MODEL_TABLES);
 
-    // `migrate diff --exit-code` exits non-zero (and execFileSync throws) on drift.
+    // Prisma 7 diffs the database named by prisma.config.ts. A non-empty
+    // diff makes `--exit-code` non-zero, and execFileSync throws.
     expect(() =>
       execFileSync(
         PRISMA_BIN,
         [
           "migrate",
           "diff",
-          "--from-url",
-          TEST_DATABASE_URL,
-          "--to-schema-datamodel",
+          "--from-config-datasource",
+          "--to-schema",
           "prisma/schema.prisma",
           "--exit-code",
         ],
-        { stdio: "pipe" },
+        {
+          stdio: "pipe",
+          env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL },
+        },
       ),
     ).not.toThrow();
   });
