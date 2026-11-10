@@ -1,3 +1,4 @@
+import { SignJWT } from "jose";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AUTH_COOKIE_NAME,
@@ -16,6 +17,21 @@ const CLAIMS = { userId: "user_123", tokenVersion: 2 };
 
 function secondsAfterIssue(seconds: number): Date {
   return new Date(ISSUED_AT.getTime() + seconds * MS_PER_SECOND);
+}
+
+// Signs a token the app's helper would never produce, so verifyAuthToken's
+// claim checks are tested with a signature that is otherwise valid.
+async function signCustomPayload(
+  claims: Record<string, unknown>,
+  subject?: string,
+): Promise<string> {
+  const issuedAt = Math.floor(ISSUED_AT.getTime() / MS_PER_SECOND);
+  const token = new SignJWT(claims)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt(issuedAt)
+    .setExpirationTime(issuedAt + 60);
+  if (subject !== undefined) token.setSubject(subject);
+  return token.sign(new TextEncoder().encode(TEST_SECRET));
 }
 
 beforeEach(() => {
@@ -73,10 +89,51 @@ describe("signAuthToken / verifyAuthToken", () => {
   });
 
   it("refuses to sign when JWT_SECRET is missing", async () => {
+    vi.stubEnv("JWT_SECRET", undefined);
+    await expect(signAuthToken(CLAIMS, ISSUED_AT)).rejects.toThrow(
+      "JWT_SECRET must be set to at least 32 characters",
+    );
+  });
+
+  it("refuses to sign when JWT_SECRET is empty", async () => {
     vi.stubEnv("JWT_SECRET", "");
     await expect(signAuthToken(CLAIMS, ISSUED_AT)).rejects.toThrow(
-      "JWT_SECRET",
+      "JWT_SECRET must be set to at least 32 characters",
     );
+  });
+
+  it("refuses a JWT_SECRET shorter than 32 characters", async () => {
+    vi.stubEnv("JWT_SECRET", "x".repeat(31));
+    await expect(signAuthToken(CLAIMS, ISSUED_AT)).rejects.toThrow(
+      "JWT_SECRET must be set to at least 32 characters",
+    );
+  });
+
+  it("signs a token when JWT_SECRET is exactly 32 characters", async () => {
+    vi.stubEnv("JWT_SECRET", "y".repeat(32));
+    const token = await signAuthToken(CLAIMS, ISSUED_AT);
+    await expect(verifyAuthToken(token, ISSUED_AT)).resolves.toEqual(CLAIMS);
+  });
+
+  it("accepts tokenVersion 0", async () => {
+    const token = await signAuthToken(
+      { userId: CLAIMS.userId, tokenVersion: 0 },
+      ISSUED_AT,
+    );
+    await expect(verifyAuthToken(token, ISSUED_AT)).resolves.toEqual({
+      userId: CLAIMS.userId,
+      tokenVersion: 0,
+    });
+  });
+
+  it("rejects a valid signature whose tokenVersion is not a number", async () => {
+    const token = await signCustomPayload({ tv: "2" }, CLAIMS.userId);
+    await expect(verifyAuthToken(token, ISSUED_AT)).resolves.toBeNull();
+  });
+
+  it("rejects a valid signature that has no subject", async () => {
+    const token = await signCustomPayload({ tv: CLAIMS.tokenVersion });
+    await expect(verifyAuthToken(token, ISSUED_AT)).resolves.toBeNull();
   });
 });
 
