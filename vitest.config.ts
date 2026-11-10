@@ -33,6 +33,8 @@ export default defineConfig({
         "**/*.test.tsx",
         "**/*.spec.ts",
         "**/*.spec.tsx",
+        // Ambient declarations match src/**/*.ts but have no runtime lines.
+        "**/*.d.ts",
       ],
       reporter: ["text", "json-summary"],
       reportsDirectory: "coverage",
