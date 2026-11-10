@@ -27,4 +27,10 @@ describe("password hashing (AGENTS.md §12)", () => {
     const hash = await hashPassword("sunflower22");
     await expect(verifyPassword("sunflower23", hash)).resolves.toBe(false);
   });
+
+  it("rejects a stored value that is not a bcrypt hash", async () => {
+    await expect(
+      verifyPassword("sunflower22", "not-a-bcrypt-hash"),
+    ).resolves.toBe(false);
+  });
 });
