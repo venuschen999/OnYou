@@ -37,6 +37,17 @@ describe("prisma client lifetime", () => {
     vi.unstubAllEnvs();
   });
 
+  it("refuses to create a client when DATABASE_URL is missing", async () => {
+    clearCachedClient();
+    vi.stubEnv("DATABASE_URL", "   ");
+    vi.resetModules();
+
+    await expect(import("@/lib/server/db")).rejects.toThrow(
+      "DATABASE_URL must be set before the database client is created",
+    );
+    vi.unstubAllEnvs();
+  });
+
   it("opens a new client on each import in production", async () => {
     clearCachedClient();
     vi.stubEnv(
