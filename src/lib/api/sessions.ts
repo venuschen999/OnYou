@@ -98,3 +98,9 @@ export function heartbeatSession(sessionId: string): Promise<FocusSessionView> {
     method: "POST",
   });
 }
+
+export function completeSession(sessionId: string): Promise<FocusSessionView> {
+  return requestJson<FocusSessionView>(`/api/sessions/${sessionId}/complete`, {
+    method: "POST",
+  });
+}

@@ -8,9 +8,10 @@ info:
     Authentication is a JWT in the HttpOnly `onyou_auth` cookie.
     A focus session belongs to the account: any authenticated tab of the
     owner may heartbeat, give up, or request completion. Protected
-    operations require that authenticated account. Signup, login, and
-    starting a session match the implemented API. Resource field lists for
-    the remaining paths are completed in a later revision.
+    operations require that authenticated account. Signup, login, starting
+    a session, heartbeats, and completion match the implemented API.
+    Resource field lists for the remaining paths are completed in a later
+    revision.
 servers:
   - url: /
 tags:
@@ -307,27 +308,71 @@ paths:
       operationId: completeSession
       summary: Complete a focus session
       description: >
-        Any authenticated tab of the owner may request completion. Completion
-        before the scheduled end is rejected. Rewards are applied once.
+        Any authenticated tab of the owner may request completion. The
+        server clock is authoritative. Completion before the scheduled end
+        is rejected. The session completes only when it was not abandoned
+        and its presence deadline is strictly later than the scheduled end.
+        Rewards are computed on the server from the session duration and the
+        feeding day of endTime, then stored once in the same transaction that
+        sets status to COMPLETED. A retry returns the stored rewards and does
+        not award them again. An Abandoned session stays Abandoned and cannot
+        be revived. A request body is ignored, including any client-supplied
+        coins, feeding minutes, or apples. No completion token is used.
+      security:
+        - authCookie: []
       parameters:
         - $ref: "#/components/parameters/SessionId"
       responses:
         "200":
-          description: The session was completed.
+          description: >
+            The completed session, including a retry that returns the stored
+            rewards.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FocusSession"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: >
-            The session cannot be completed because it is already resolved or
-            the scheduled end has not been reached.
+          description: The authenticated account does not own this session.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: FORBIDDEN
+                  message: That session belongs to another account.
+        "404":
+          description: No session exists with this id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: SESSION_NOT_FOUND
+                  message: No session exists with that id.
+        "409":
+          description: >
+            Completion is rejected when the scheduled end has not been
+            reached (SESSION_TOO_EARLY) or the session is Abandoned
+            (SESSION_ABANDONED). A Completed session is not a conflict.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                tooEarly:
+                  value:
+                    error:
+                      code: SESSION_TOO_EARLY
+                      message: This session has not reached its scheduled end.
+                abandoned:
+                  value:
+                    error:
+                      code: SESSION_ABANDONED
+                      message: This session was abandoned and cannot be completed.
   /api/sessions/{id}/abandon:
     post:
       tags: [Sessions]
@@ -510,6 +555,8 @@ components:
                 - FORBIDDEN
                 - SESSION_NOT_FOUND
                 - ACTIVE_SESSION_EXISTS
+                - SESSION_TOO_EARLY
+                - SESSION_ABANDONED
                 - INTERNAL_ERROR
             message:
               type: string
