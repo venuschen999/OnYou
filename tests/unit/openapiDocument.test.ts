@@ -93,6 +93,28 @@ describe("OpenAPI document", () => {
     expect(heartbeat).not.toContain("X-Session-Token");
   });
 
+  it("documents POST /api/sessions/{id}/complete as exactly-once rewards (#15)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions/{id}/complete:");
+    const end = document.indexOf("  /api/sessions/{id}/abandon:");
+    const complete = document.slice(start, end);
+    const errorCodes = document.slice(document.indexOf("ErrorResponse:"));
+
+    expect(complete).toContain("operationId: completeSession");
+    expect(complete).toContain("authCookie");
+    expect(complete).toContain('$ref: "#/components/schemas/FocusSession"');
+    expect(complete).toContain("SESSION_TOO_EARLY");
+    expect(complete).toContain("SESSION_ABANDONED");
+    expect(complete).toContain("SESSION_NOT_FOUND");
+    expect(complete).toContain("FORBIDDEN");
+    expect(complete).toContain("stored rewards");
+    expect(complete).toContain("presence deadline");
+    expect(complete).not.toContain("X-Session-Token");
+    expect(complete).not.toContain("sessionStorage");
+    expect(errorCodes).toContain("SESSION_TOO_EARLY");
+    expect(errorCodes).toContain("SESSION_ABANDONED");
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
