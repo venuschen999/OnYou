@@ -75,7 +75,10 @@ beforeEach(() => {
   });
   tx.focusSession.updateMany.mockReset();
   tx.focusSession.updateMany.mockImplementation(
-    async (args: { where: { status: string }; data: Partial<FocusSession> }) => {
+    async (args: {
+      where: { status: string };
+      data: Partial<FocusSession>;
+    }) => {
       if (!session || session.status !== args.where.status) return { count: 0 };
       if (loseUpdate === "completed") {
         session = storedSession({
@@ -109,10 +112,7 @@ beforeEach(() => {
   tx.dailyFeeding.findUnique.mockImplementation(async () => feeding);
   tx.dailyFeeding.upsert.mockReset();
   tx.dailyFeeding.upsert.mockImplementation(
-    async (args: {
-      create: FeedingRow;
-      update: FeedingRow;
-    }) => {
+    async (args: { create: FeedingRow; update: FeedingRow }) => {
       feeding = feeding
         ? {
             feedingMinutes: args.update.feedingMinutes,
@@ -137,7 +137,9 @@ describe("completeSession (US6, #15)", () => {
       coinsEarned: 25,
       feedingMinutesEarned: 25,
       applesEarned: 1,
-      lastHeartbeatAt: new Date(END.getTime() - 10 * MS_PER_SECOND).toISOString(),
+      lastHeartbeatAt: new Date(
+        END.getTime() - 10 * MS_PER_SECOND,
+      ).toISOString(),
     });
     expect(pet?.coins).toBe(25);
     expect(feeding).toEqual({ feedingMinutes: 25, apples: 1 });
@@ -236,9 +238,9 @@ describe("completeSession (US6, #15)", () => {
       applesEarned: 0,
     });
 
-    await expect(completeSession(USER_ID, "session_1", END)).rejects.toMatchObject(
-      { code: "SESSION_ABANDONED", status: 409 },
-    );
+    await expect(
+      completeSession(USER_ID, "session_1", END),
+    ).rejects.toMatchObject({ code: "SESSION_ABANDONED", status: 409 });
     expect(tx.pet.update).not.toHaveBeenCalled();
     expect(tx.dailyFeeding.upsert).not.toHaveBeenCalled();
   });
@@ -287,9 +289,9 @@ describe("completeSession (US6, #15)", () => {
   it("fails before writing rewards when the account has no pet", async () => {
     pet = null;
 
-    await expect(completeSession(USER_ID, "session_1", END)).rejects.toMatchObject(
-      { code: "INTERNAL_ERROR", status: 500 },
-    );
+    await expect(
+      completeSession(USER_ID, "session_1", END),
+    ).rejects.toMatchObject({ code: "INTERNAL_ERROR", status: 500 });
     expect(session?.status).toBe("ACTIVE");
     expect(tx.focusSession.updateMany).not.toHaveBeenCalled();
   });

@@ -1,4 +1,12 @@
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { POST as signup } from "@/app/api/auth/signup/route";
 import { POST as complete } from "@/app/api/sessions/[id]/complete/route";
 import { PRESENCE_GRACE_SECONDS } from "@/lib/domain/presence";
@@ -24,8 +32,7 @@ const GRACE_MS = PRESENCE_GRACE_SECONDS * MS_PER_SECOND;
 const NOT_FOUND_MESSAGE = "No session exists with that id.";
 const FORBIDDEN_MESSAGE = "That session belongs to another account.";
 const TOO_EARLY_MESSAGE = "This session has not reached its scheduled end.";
-const ABANDONED_MESSAGE =
-  "This session was abandoned and cannot be completed.";
+const ABANDONED_MESSAGE = "This session was abandoned and cannot be completed.";
 const SESSION_KEYS = [
   "applesEarned",
   "coinsEarned",
@@ -168,7 +175,9 @@ describe("POST /api/sessions/{id}/complete (US6, #15)", () => {
       status: "COMPLETED",
       startTime: NOW.toISOString(),
       endTime: END.toISOString(),
-      lastHeartbeatAt: new Date(END.getTime() - 10 * MS_PER_SECOND).toISOString(),
+      lastHeartbeatAt: new Date(
+        END.getTime() - 10 * MS_PER_SECOND,
+      ).toISOString(),
       coinsEarned: 25,
       feedingMinutesEarned: 25,
       applesEarned: 1,
@@ -241,7 +250,7 @@ describe("POST /api/sessions/{id}/complete (US6, #15)", () => {
     });
     const hostile = await postComplete(
       user.token,
-      "'; DROP TABLE \"FocusSession\"; --",
+      '\'; DROP TABLE "FocusSession"; --',
     );
     expect(hostile.status).toBe(404);
     expect(await testPrisma.focusSession.count()).toBe(0);

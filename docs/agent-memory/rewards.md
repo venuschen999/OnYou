@@ -17,3 +17,11 @@ Coins, feeding minutes, apples, and feeding day. PRD v2.9 §6; `AGENTS.md` §8.
 - **Why:** PRD v2.9 §6 gives one apple per 25 feeding minutes with leftover minutes carrying on the same day, and caps the day at 50 minutes and 2 apples. Deriving apples from minutes keeps the two stored counts consistent.
 - **Applies to:** #11, #15, #19.
 - **Status:** Decided.
+
+## R3. Completion persists earned amounts and the day's totals together
+
+- **Decision:** `coinsEarned`, `feedingMinutesEarned`, and `applesEarned` on the session are the `calculateRewards` deltas. `Pet.coins` increases by `coinsEarned`. `DailyFeeding.feedingMinutes` and `apples` become `feedingAfter` for the feeding day of `endTime`. An abandoned completion stores zeros on the session and does not change the pet or that day's feeding row.
+- **Date / decided by:** 2026-11-10, Partner B (`CollinsCao`).
+- **Why:** R2. The session row must stay stable for retries, while the pet and the feeding day hold the running totals (PRD v2.9 §6).
+- **Applies to:** #15 (`completeSession`). Sessions decision S9 describes the transaction.
+- **Status:** Decided.
