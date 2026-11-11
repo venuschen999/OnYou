@@ -41,6 +41,7 @@ const SESSION_KEYS = [
   "feedingMinutesEarned",
   "id",
   "lastHeartbeatAt",
+  "pet",
   "startTime",
   "status",
   "taskName",
@@ -181,6 +182,13 @@ describe("POST /api/sessions/{id}/complete (US6, #15)", () => {
       coinsEarned: 25,
       feedingMinutesEarned: 25,
       applesEarned: 1,
+    });
+    expect(body.pet).toEqual({
+      name: "Mochi",
+      feedingState: "HUNGRY",
+      apples: 1,
+      feedingMinutes: 25,
+      minutesUntilNextApple: 25,
     });
     expect(JSON.stringify(body)).not.toMatch(/token/i);
 
@@ -427,7 +435,19 @@ describe("POST /api/sessions/{id}/complete (US6, #15)", () => {
     });
 
     expect(second.status).toBe(200);
-    await expect(second.json()).resolves.toEqual(firstBody);
+    const secondBody = await second.json();
+    expect({ ...secondBody, pet: undefined }).toEqual({
+      ...firstBody,
+      pet: undefined,
+    });
+    // The retry reads the feeding row and does not write it back.
+    expect(secondBody.pet).toEqual({
+      name: "Mochi",
+      feedingState: "FULL",
+      apples: 2,
+      feedingMinutes: 50,
+      minutesUntilNextApple: 0,
+    });
     const savedPet = await testPrisma.pet.findUniqueOrThrow({
       where: { userId: user.id },
     });

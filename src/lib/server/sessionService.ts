@@ -1,7 +1,13 @@
 import { Prisma, type FocusSession } from "@prisma/client";
 import { getFeedingDay } from "@/lib/domain/feedingDay";
 import { planSessionResolution, presenceDeadline } from "@/lib/domain/presence";
-import { calculateRewards, type RewardResult } from "@/lib/domain/rewards";
+import {
+  calculateRewards,
+  getFeedingState,
+  minutesUntilNextApple,
+  type FeedingState,
+  type RewardResult,
+} from "@/lib/domain/rewards";
 import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
 import type { StartSessionInput } from "@/lib/validation/session";
 import { prisma } from "./db";
@@ -15,8 +21,21 @@ const FORBIDDEN_MESSAGE = "That session belongs to another account.";
 const TOO_EARLY_MESSAGE = "This session has not reached its scheduled end.";
 const ABANDONED_MESSAGE = "This session was abandoned and cannot be completed.";
 
-type CompletionOutcome =
+type StoredOutcome =
   | { kind: "completed"; session: FocusSession }
+  | { kind: "abandoned" }
+  | { kind: "too-early" };
+
+export type SessionPetResponse = {
+  name: string;
+  feedingState: FeedingState;
+  apples: number;
+  feedingMinutes: number;
+  minutesUntilNextApple: number;
+};
+
+type CompletionOutcome =
+  | { kind: "completed"; session: FocusSession; pet: SessionPetResponse }
   | { kind: "abandoned" }
   | { kind: "too-early" };
 
@@ -31,6 +50,7 @@ export type SessionResponse = {
   coinsEarned: number;
   feedingMinutesEarned: number;
   applesEarned: number;
+  pet?: SessionPetResponse;
 };
 
 function activeSessionError(): AppError {
@@ -44,7 +64,10 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
-function toPublicSession(session: FocusSession): SessionResponse {
+function toPublicSession(
+  session: FocusSession,
+  pet?: SessionPetResponse,
+): SessionResponse {
   return {
     id: session.id,
     taskName: session.taskName,
@@ -56,6 +79,21 @@ function toPublicSession(session: FocusSession): SessionResponse {
     coinsEarned: session.coinsEarned,
     feedingMinutesEarned: session.feedingMinutesEarned,
     applesEarned: session.applesEarned,
+    ...(pet ? { pet } : {}),
+  };
+}
+
+function petSnapshot(
+  name: string,
+  feedingMinutes: number,
+  apples: number,
+): SessionPetResponse {
+  return {
+    name,
+    feedingState: getFeedingState(apples),
+    apples,
+    feedingMinutes,
+    minutesUntilNextApple: minutesUntilNextApple(feedingMinutes, apples),
   };
 }
 
@@ -256,7 +294,7 @@ async function lockPet(
 async function readFinalOutcome(
   tx: Prisma.TransactionClient,
   sessionId: string,
-): Promise<CompletionOutcome> {
+): Promise<StoredOutcome> {
   const current = await tx.focusSession.findUniqueOrThrow({
     where: { id: sessionId },
   });
@@ -329,7 +367,7 @@ async function persistRewards(
   petId: string,
   feedingDay: Date,
   rewards: RewardResult,
-): Promise<CompletionOutcome> {
+): Promise<StoredOutcome> {
   const completed = await markCompleted(tx, session, rewards);
   if (!completed) return readFinalOutcome(tx, session.id);
   await storeBalances(tx, petId, feedingDay, rewards);
@@ -339,7 +377,7 @@ async function persistRewards(
 async function awardCompletion(
   tx: Prisma.TransactionClient,
   session: FocusSession,
-): Promise<CompletionOutcome> {
+): Promise<StoredOutcome> {
   await lockPet(tx, session.userId);
   const pet = await tx.pet.findUnique({ where: { userId: session.userId } });
   if (!pet) throw new AppError("INTERNAL_ERROR", SERVER_ERROR_MESSAGE);
@@ -363,6 +401,39 @@ async function awardCompletion(
   return persistRewards(tx, session, pet.id, feedingDay, rewards);
 }
 
+async function readPetSnapshot(
+  tx: Prisma.TransactionClient,
+  session: FocusSession,
+): Promise<SessionPetResponse> {
+  const pet = await tx.pet.findUnique({ where: { userId: session.userId } });
+  if (!pet) throw new AppError("INTERNAL_ERROR", SERVER_ERROR_MESSAGE);
+  const user = await tx.user.findUniqueOrThrow({
+    where: { id: session.userId },
+    select: { timezone: true },
+  });
+  const feedingDay = feedingDayDate(session.endTime, user.timezone);
+  const feeding = await tx.dailyFeeding.findUnique({
+    where: { petId_feedingDay: { petId: pet.id, feedingDay } },
+  });
+  return petSnapshot(
+    pet.name,
+    feeding?.feedingMinutes ?? 0,
+    feeding?.apples ?? 0,
+  );
+}
+
+async function withPet(
+  tx: Prisma.TransactionClient,
+  outcome: StoredOutcome,
+): Promise<CompletionOutcome> {
+  if (outcome.kind !== "completed") return outcome;
+  return {
+    kind: "completed",
+    session: outcome.session,
+    pet: await readPetSnapshot(tx, outcome.session),
+  };
+}
+
 async function finishCompletion(
   tx: Prisma.TransactionClient,
   session: FocusSession,
@@ -370,7 +441,7 @@ async function finishCompletion(
 ): Promise<CompletionOutcome> {
   const resolved = await resolveSession(tx, session, now);
   if (resolved.status === "COMPLETED") {
-    return { kind: "completed", session: resolved };
+    return withPet(tx, { kind: "completed", session: resolved });
   }
   if (resolved.status === "ABANDONED") return { kind: "abandoned" };
   if (now.getTime() < resolved.endTime.getTime()) return { kind: "too-early" };
@@ -380,7 +451,7 @@ async function finishCompletion(
     await abandonActive(tx, resolved);
     return { kind: "abandoned" };
   }
-  return awardCompletion(tx, resolved);
+  return withPet(tx, await awardCompletion(tx, resolved));
 }
 
 export async function completeSession(
@@ -394,5 +465,5 @@ export async function completeSession(
   });
   if (outcome.kind === "abandoned") throw abandonedError();
   if (outcome.kind === "too-early") throw tooEarlyError();
-  return toPublicSession(outcome.session);
+  return toPublicSession(outcome.session, outcome.pet);
 }

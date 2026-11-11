@@ -315,9 +315,11 @@ paths:
         Rewards are computed on the server from the session duration and the
         feeding day of endTime, then stored once in the same transaction that
         sets status to COMPLETED. A retry returns the stored rewards and does
-        not award them again. An Abandoned session stays Abandoned and cannot
-        be revived. A request body is ignored, including any client-supplied
-        coins, feeding minutes, or apples. No completion token is used.
+        not award them again. The response adds a pet snapshot for that feeding
+        day: feedingState and minutesUntilNextApple. An Abandoned session stays
+        Abandoned and cannot be revived. A request body is ignored, including
+        any client-supplied coins, feeding minutes, or apples. No completion
+        token is used.
       security:
         - authCookie: []
       parameters:
@@ -326,11 +328,17 @@ paths:
         "200":
           description: >
             The completed session, including a retry that returns the stored
-            rewards.
+            rewards, and the pet feeding state after those rewards.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FocusSession"
+                allOf:
+                  - $ref: "#/components/schemas/FocusSession"
+                  - type: object
+                    required: [pet]
+                    properties:
+                      pet:
+                        $ref: "#/components/schemas/SessionPet"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -537,6 +545,34 @@ components:
           type: integer
         applesEarned:
           type: integer
+    SessionPet:
+      type: object
+      description: Pet feeding state after a completed session's stored rewards.
+      required:
+        - name
+        - feedingState
+        - apples
+        - feedingMinutes
+        - minutesUntilNextApple
+      properties:
+        name:
+          type: string
+          example: Mochi
+        feedingState:
+          type: string
+          enum: [STARVING, HUNGRY, FULL]
+        apples:
+          type: integer
+          minimum: 0
+          maximum: 2
+        feedingMinutes:
+          type: integer
+          minimum: 0
+          maximum: 50
+        minutesUntilNextApple:
+          type: integer
+          minimum: 0
+          maximum: 25
     ErrorResponse:
       type: object
       required: [error]

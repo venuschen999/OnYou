@@ -73,6 +73,17 @@ export function minutesTowardNextApple(feedingMinutes: number): number {
   return feedingMinutes % APPLE_MINUTES;
 }
 
+// Minutes still needed for the next apple. Zero once the day is Full.
+export function minutesUntilNextApple(
+  feedingMinutes: number,
+  apples: number,
+): number {
+  if (getFeedingState(apples) === FeedingState.FULL) return 0;
+  const toward = minutesTowardNextApple(feedingMinutes);
+  if (toward === 0) return APPLE_MINUTES;
+  return APPLE_MINUTES - toward;
+}
+
 export function getFeedingState(apples: number): FeedingState {
   if (apples >= MAX_APPLES_PER_DAY) return FeedingState.FULL;
   if (apples > 0) return FeedingState.HUNGRY;

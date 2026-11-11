@@ -109,6 +109,9 @@ describe("OpenAPI document", () => {
     expect(complete).toContain("FORBIDDEN");
     expect(complete).toContain("stored rewards");
     expect(complete).toContain("presence deadline");
+    expect(complete).toContain("SessionPet");
+    expect(complete).toContain("feedingState");
+    expect(complete).toContain("minutesUntilNextApple");
     expect(complete).not.toContain("X-Session-Token");
     expect(complete).not.toContain("sessionStorage");
     expect(errorCodes).toContain("SESSION_TOO_EARLY");

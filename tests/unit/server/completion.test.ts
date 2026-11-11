@@ -31,7 +31,7 @@ const { prisma, tx } = vi.hoisted(() => {
 vi.mock("@/lib/server/db", () => ({ prisma }));
 
 let session: FocusSession | null = null;
-let pet: { id: string; coins: number } | null = null;
+let pet: { id: string; coins: number; name: string } | null = null;
 let feeding: FeedingRow | null = null;
 let loseUpdate: "completed" | "active" | null = null;
 
@@ -54,7 +54,7 @@ function storedSession(overrides: Partial<FocusSession> = {}): FocusSession {
 
 beforeEach(() => {
   session = storedSession();
-  pet = { id: "pet_1", coins: 0 };
+  pet = { id: "pet_1", coins: 0, name: "Mochi" };
   feeding = null;
   loseUpdate = null;
   prisma.$transaction.mockReset();
@@ -141,6 +141,13 @@ describe("completeSession (US6, #15)", () => {
         END.getTime() - 10 * MS_PER_SECOND,
       ).toISOString(),
     });
+    expect(result.pet).toEqual({
+      name: "Mochi",
+      feedingState: "HUNGRY",
+      apples: 1,
+      feedingMinutes: 25,
+      minutesUntilNextApple: 25,
+    });
     expect(pet?.coins).toBe(25);
     expect(feeding).toEqual({ feedingMinutes: 25, apples: 1 });
     expect(getFeedingState(feeding?.apples ?? 0)).toBe(FeedingState.HUNGRY);
@@ -149,7 +156,7 @@ describe("completeSession (US6, #15)", () => {
 
   it("caps the feeding day and still stores the earned coins", async () => {
     feeding = { feedingMinutes: 40, apples: 1 };
-    pet = { id: "pet_1", coins: 30 };
+    pet = { id: "pet_1", coins: 30, name: "Mochi" };
 
     const result = await completeSession(USER_ID, "session_1", END);
 
@@ -158,6 +165,13 @@ describe("completeSession (US6, #15)", () => {
       coinsEarned: 25,
       feedingMinutesEarned: 10,
       applesEarned: 1,
+    });
+    expect(result.pet).toEqual({
+      name: "Mochi",
+      feedingState: "FULL",
+      apples: 2,
+      feedingMinutes: 50,
+      minutesUntilNextApple: 0,
     });
     expect(pet?.coins).toBe(55);
     expect(feeding).toEqual({ feedingMinutes: 50, apples: 2 });
@@ -171,7 +185,7 @@ describe("completeSession (US6, #15)", () => {
       feedingMinutesEarned: 25,
       applesEarned: 1,
     });
-    pet = { id: "pet_1", coins: 25 };
+    pet = { id: "pet_1", coins: 25, name: "Mochi" };
     feeding = { feedingMinutes: 25, apples: 1 };
 
     const result = await completeSession(
@@ -185,6 +199,13 @@ describe("completeSession (US6, #15)", () => {
       coinsEarned: 25,
       feedingMinutesEarned: 25,
       applesEarned: 1,
+    });
+    expect(result.pet).toEqual({
+      name: "Mochi",
+      feedingState: "HUNGRY",
+      apples: 1,
+      feedingMinutes: 25,
+      minutesUntilNextApple: 25,
     });
     expect(pet?.coins).toBe(25);
     expect(feeding).toEqual({ feedingMinutes: 25, apples: 1 });
@@ -261,7 +282,7 @@ describe("completeSession (US6, #15)", () => {
 
   it("does not award rewards when the conditional update loses the race", async () => {
     loseUpdate = "completed";
-    pet = { id: "pet_1", coins: 25 };
+    pet = { id: "pet_1", coins: 25, name: "Mochi" };
 
     const result = await completeSession(USER_ID, "session_1", END);
 
