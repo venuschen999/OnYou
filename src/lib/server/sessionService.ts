@@ -155,6 +155,28 @@ export async function heartbeatSession(
   });
 }
 
+// Reading joins an existing session. Resolve expiry first, and do not treat
+// this read as a heartbeat (PRD v2.9 §5.2, §10).
+export async function getActiveSession(
+  userId: string,
+  now: Date,
+): Promise<SessionResponse | null> {
+  return prisma.$transaction(async (tx) => {
+    const active = await tx.focusSession.findFirst({
+      where: { userId, status: "ACTIVE" },
+    });
+    if (!active) return null;
+
+    await lockSession(tx, active.id);
+    const locked = await tx.focusSession.findUniqueOrThrow({
+      where: { id: active.id },
+    });
+    const resolved = await resolveSession(tx, locked, now);
+    if (resolved.status !== "ACTIVE") return null;
+    return toPublicSession(resolved);
+  });
+}
+
 export async function startSession(
   userId: string,
   input: StartSessionInput,

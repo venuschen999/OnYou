@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactElement } from "react";
 
-type ButtonVariant = "primary" | "secondary";
+type ButtonVariant = "primary" | "secondary" | "danger";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -10,6 +10,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: "bg-primary text-primary-foreground",
   secondary: "border-[1.5px] border-line bg-transparent text-foreground",
+  // Focus Give up uses the mockup danger button. Auth screens use primary and secondary.
+  danger: "border-[1.5px] border-danger bg-transparent text-danger",
 };
 
 // Mockup .btn: rounded, bold; full width on phones (AGENTS.md §7).

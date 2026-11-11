@@ -1,6 +1,9 @@
 // Presence deadline = latest accepted heartbeat + 30 seconds (PRD v2.9 §5.2).
 export const PRESENCE_GRACE_SECONDS = 30;
 
+// Each joined tab heartbeats on this interval (PRD v2.9 §5.2, AGENTS.md §8).
+export const HEARTBEAT_INTERVAL_MS = 10_000;
+
 const MS_PER_SECOND = 1000;
 
 export type PresenceDecision = "ACTIVE" | "ABANDON" | "ELIGIBLE_TO_COMPLETE";

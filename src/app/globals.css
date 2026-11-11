@@ -63,3 +63,10 @@ body {
   outline: 3px solid var(--pine);
   outline-offset: 2px;
 }
+
+.countdown-digits {
+  font-variant-numeric: tabular-nums;
+  font-variation-settings:
+    "MONO" 1,
+    "CASL" 0;
+}

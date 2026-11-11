@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Recursive } from "next/font/google";
+import { SessionPresence } from "@/components/SessionPresence";
 import "./globals.css";
 
 // One sans-serif family, matching OnYou_web_mockups.html (AGENTS.md §7).
@@ -17,7 +18,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${recursive.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        <SessionPresence>{children}</SessionPresence>
+      </body>
     </html>
   );
 }

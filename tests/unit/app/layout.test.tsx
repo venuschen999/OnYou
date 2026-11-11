@@ -5,6 +5,10 @@ vi.mock("next/font/google", () => ({
   Recursive: () => ({ variable: "--font-recursive" }),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+}));
+
 import RootLayout, { metadata } from "@/app/layout";
 
 describe("root layout", () => {
