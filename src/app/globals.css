@@ -70,3 +70,33 @@ body {
     "MONO" 1,
     "CASL" 0;
 }
+
+/* Slap is under one second and stops when the user prefers less motion. */
+@keyframes pet-slap {
+  0% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-14deg) translateX(-6px);
+  }
+  45% {
+    transform: rotate(8deg);
+  }
+  70% {
+    transform: rotate(-4deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+
+.pet-slap {
+  transform-origin: 50% 80%;
+  animation: pet-slap 0.8s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-slap {
+    animation: none;
+  }
+}
