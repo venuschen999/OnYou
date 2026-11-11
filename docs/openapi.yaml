@@ -171,7 +171,13 @@ paths:
       summary: List focus history
       description: >
         Returns the authenticated account's Completed and Abandoned sessions,
-        newest first, 20 per page.
+        newest first, 20 per page. Active sessions are omitted. Each item's
+        date is that session's startTime in UTC. When start times are equal,
+        the greater session id comes first. An Abandoned session reports zero
+        coins and zero feeding minutes. The cursor is the id of a final
+        session belonging to this account.
+      security:
+        - authCookie: []
       parameters:
         - $ref: "#/components/parameters/HistoryCursor"
         - $ref: "#/components/parameters/HistoryLimit"
@@ -442,6 +448,7 @@ components:
       description: Page size. History pages contain 20 sessions.
       schema:
         type: integer
+        enum: [20]
         default: 20
   schemas:
     Email:
@@ -601,6 +608,39 @@ components:
               description: Per-field messages for form display, keyed by field name.
               additionalProperties:
                 type: string
+    HistorySession:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - taskName
+        - date
+        - durationMinutes
+        - outcome
+        - coinsEarned
+        - feedingMinutesEarned
+      properties:
+        id:
+          type: string
+        taskName:
+          type: string
+          example: Essay draft: intro
+        date:
+          type: string
+          format: date-time
+          description: Session startTime in UTC. Pages are ordered by this instant.
+        durationMinutes:
+          type: integer
+          enum: [15, 25, 50]
+        outcome:
+          type: string
+          enum: [COMPLETED, ABANDONED]
+        coinsEarned:
+          type: integer
+          minimum: 0
+        feedingMinutesEarned:
+          type: integer
+          minimum: 0
     SessionHistoryPage:
       type: object
       additionalProperties: false
@@ -609,12 +649,9 @@ components:
         items:
           type: array
           description: >
-            Focus sessions for the authenticated account, newest first.
-            The fields of each session are specified in a later revision.
+            Completed and Abandoned sessions for this account, newest first.
           items:
-            type: object
-            additionalProperties: true
-            description: One history entry. Field list deferred.
+            $ref: "#/components/schemas/HistorySession"
         nextCursor:
           type: [string, "null"]
           description: >

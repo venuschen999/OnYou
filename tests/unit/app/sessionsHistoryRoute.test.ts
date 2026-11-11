@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as listSessionsRoute } from "@/app/api/sessions/route";
 import { getAuthenticatedUser } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/errors";
-import { listSessionHistory } from "@/lib/server/sessionService";
+import {
+  listSessionHistory,
+  type HistoryPage,
+} from "@/lib/server/sessionService";
 
 vi.mock("@/lib/server/auth", () => ({
   getAuthenticatedUser: vi.fn(),
@@ -32,7 +35,7 @@ const PAGE = {
     },
   ],
   nextCursor: null,
-};
+} satisfies HistoryPage;
 
 function request(query = "", cookie?: string): Request {
   const headers = new Headers();
