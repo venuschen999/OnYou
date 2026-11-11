@@ -37,7 +37,6 @@ export function FocusSetup({ starting, onStart }: FocusSetupProps) {
     DURATIONS[1],
   );
   const error = taskError(taskName, durationMinutes);
-  const errorId = "task-name-error";
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -51,27 +50,14 @@ export function FocusSetup({ starting, onStart }: FocusSetupProps) {
         <h1 className="m-0 text-3xl font-extrabold">
           What are you working on?
         </h1>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold" htmlFor="task-name">
-            Task
-          </label>
-          <Input
-            id="task-name"
-            value={taskName}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? errorId : "task-name-hint"}
-            onChange={(event) => setTaskName(event.target.value)}
-          />
-          {error ? (
-            <p id={errorId} className="m-0 text-sm font-semibold text-danger">
-              {error}
-            </p>
-          ) : (
-            <span id="task-name-hint" className="text-sm text-muted">
-              Optional. Up to 80 characters.
-            </span>
-          )}
-        </div>
+        <Input
+          id="task-name"
+          label="Task"
+          value={taskName}
+          hint={error ? undefined : "Optional. Up to 80 characters."}
+          error={error}
+          onChange={(event) => setTaskName(event.target.value)}
+        />
         <DurationPicker value={durationMinutes} onChange={setDurationMinutes} />
         <p className="m-0 max-w-prose text-muted">{KEEP_OPEN}</p>
         <div>
@@ -82,7 +68,7 @@ export function FocusSetup({ starting, onStart }: FocusSetupProps) {
       </form>
       <aside className="flex flex-col items-center gap-2 rounded-3xl border border-line bg-surface p-7 max-[600px]:hidden">
         <div className="w-40">
-          <PetArt label="Mochi is waiting" />
+          <PetArt state="hungry" label="Mochi is waiting" />
         </div>
         <p className="m-0 text-xl font-bold">Mochi</p>
       </aside>

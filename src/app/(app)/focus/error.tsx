@@ -6,10 +6,11 @@ type FocusErrorProps = {
 };
 
 // Next.js always passes `error`. The screen shows a generic message so a
-// digest or internal detail is not rendered (AGENTS.md §12).
+// digest or internal detail is not rendered (AGENTS.md §12). The app layout
+// already provides the main landmark.
 export default function FocusError({ reset }: FocusErrorProps) {
   return (
-    <main className="flex flex-1 flex-col items-start gap-3 p-6">
+    <div className="flex flex-1 flex-col items-start gap-3">
       <h1 className="m-0 text-3xl font-extrabold">
         Couldn’t load the focus screen
       </h1>
@@ -21,6 +22,6 @@ export default function FocusError({ reset }: FocusErrorProps) {
       >
         Try again
       </button>
-    </main>
+    </div>
   );
 }

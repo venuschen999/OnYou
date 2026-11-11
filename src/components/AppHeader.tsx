@@ -1,24 +1,43 @@
-import Link from "next/link";
+"use client";
 
-const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/history", label: "History" },
-  { href: "/settings", label: "Settings" },
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ReactElement } from "react";
+import { ROUTES } from "@/lib/routes";
+
+// AGENTS.md §7: nav is Home, History, Settings, including during a session.
+const NAV_ITEMS = [
+  { label: "Home", href: ROUTES.home },
+  { label: "History", href: ROUTES.history },
+  { label: "Settings", href: ROUTES.settings },
 ] as const;
 
-export function AppHeader() {
+function isCurrent(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function AppHeader(): ReactElement {
+  const pathname = usePathname();
   return (
-    <header className="flex items-center justify-between border-b border-line px-6 py-4 max-[600px]:px-5">
-      <span className="text-xl font-extrabold">OnYou</span>
+    <header className="flex items-center justify-between gap-4 border-b border-line bg-surface px-4 py-4 sm:px-9">
+      <span className="text-[1.15rem] font-extrabold sm:text-xl">OnYou</span>
       <nav
-        className="flex gap-6 text-sm max-[600px]:gap-4"
-        aria-label="Account"
+        aria-label="Main"
+        className="flex gap-4 text-[0.88rem] sm:gap-8 sm:text-[0.95rem]"
       >
-        {LINKS.map((link) => (
-          <Link key={link.href} href={link.href} className="text-muted">
-            {link.label}
-          </Link>
-        ))}
+        {NAV_ITEMS.map(({ label, href }) => {
+          const isActive = isCurrent(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isActive ? "page" : undefined}
+              className="border-b-2 border-transparent py-1 text-muted no-underline aria-[current=page]:border-primary aria-[current=page]:font-bold aria-[current=page]:text-foreground"
+            >
+              {label}
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );

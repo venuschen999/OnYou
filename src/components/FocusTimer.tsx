@@ -59,7 +59,7 @@ export function FocusTimer({ session }: FocusTimerProps) {
           />
         </svg>
         <div className="absolute top-16 left-16 w-48 max-[600px]:top-12 max-[600px]:left-12 max-[600px]:w-36">
-          <PetArt label="Mochi is waiting" />
+          <PetArt state="hungry" label="Mochi is waiting" />
         </div>
       </div>
       <div className="flex flex-col items-start gap-2.5 max-[600px]:items-center">

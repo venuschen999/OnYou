@@ -1,8 +1,6 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
-import { ActiveSessionBar } from "@/components/ActiveSessionBar";
 import {
   useSessionController,
   type SessionController,
@@ -18,17 +16,12 @@ export function useSession(): SessionController {
   return value;
 }
 
+// Root layout owns this provider so heartbeats survive navigation between
+// Home, Focus, History, and Settings (AGENTS.md §3).
 export function SessionPresence({ children }: { children: ReactNode }) {
   const controller = useSessionController();
-  const pathname = usePathname();
-  const showBar =
-    controller.session?.status === "ACTIVE" && pathname !== "/focus";
-
   return (
     <SessionContext.Provider value={controller}>
-      {showBar && controller.session ? (
-        <ActiveSessionBar session={controller.session} />
-      ) : null}
       {children}
     </SessionContext.Provider>
   );

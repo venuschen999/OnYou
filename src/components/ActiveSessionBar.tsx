@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCountdown } from "@/hooks/useCountdown";
 import { formatEndClock } from "@/lib/domain/countdown";
 import type { FocusSessionView } from "@/lib/api/sessions";
+import { ROUTES } from "@/lib/routes";
 
 type ActiveSessionBarProps = {
   session: FocusSessionView;
@@ -26,7 +27,7 @@ export function ActiveSessionBar({ session }: ActiveSessionBarProps) {
         {endClock}.
       </p>
       <Link
-        href="/focus"
+        href={ROUTES.focus}
         className="rounded-[14px] bg-primary px-4 py-2 text-center font-bold text-primary-foreground max-[600px]:w-full"
       >
         Return to session

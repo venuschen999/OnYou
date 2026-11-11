@@ -8,6 +8,7 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ActiveSessionNotice } from "@/components/ActiveSessionNotice";
 import { FocusScreen } from "@/components/FocusScreen";
 import { SessionPresence } from "@/components/SessionPresence";
 import { formatEndClock } from "@/lib/domain/countdown";
@@ -137,6 +138,7 @@ function alertText(): string {
 function renderFocus(): void {
   render(
     <SessionPresence>
+      <ActiveSessionNotice />
       <FocusScreen />
     </SessionPresence>,
   );
@@ -502,9 +504,10 @@ describe("Focus screen restore and heartbeats (US5, #13)", () => {
   });
 
   it("shows the active session bar on other screens", async () => {
-    navigation.pathname = "/";
+    navigation.pathname = "/dashboard";
     render(
       <SessionPresence>
+        <ActiveSessionNotice />
         <p>Home</p>
       </SessionPresence>,
     );

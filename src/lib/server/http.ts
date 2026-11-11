@@ -6,6 +6,7 @@ import {
   type ErrorCode,
   type FieldErrors,
 } from "./errors";
+import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
 
 type ErrorBody = {
   error: { code: ErrorCode; message: string; fields?: FieldErrors };
@@ -59,7 +60,7 @@ export function toErrorResponse(error: unknown): NextResponse<ErrorBody> {
     {
       error: {
         code: "INTERNAL_ERROR",
-        message: "Something went wrong. Try again.",
+        message: SERVER_ERROR_MESSAGE,
       },
     },
     { status: getErrorStatus("INTERNAL_ERROR") },
