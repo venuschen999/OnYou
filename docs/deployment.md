@@ -41,6 +41,21 @@ Apply migrations to production by deploying `main` after this configuration is i
 
 Integration tests set both `DATABASE_URL` and `DATABASE_URL_UNPOOLED` to `TEST_DATABASE_URL` before `migrate deploy`, so a local `.env` cannot redirect those tests.
 
-## Dashboard steps still required
+## Accounts
 
-Linking `onyou123` to `venuschen999/OnYou`, choosing `main` as the production branch, enabling preview deployments, creating the Neon project, and saving the environment values are Vercel and Neon account actions. This repository documents and prepares those steps. Merging it does not by itself prove a deployment succeeded.
+The Vercel project `onyou123` is on Venus's account. The Neon project `onyou` is in Collins' Neon organization. Connect that existing Vercel project to `venuschen999/OnYou`. Do not create a second Vercel project or a second Neon project.
+
+## Handoff checklist
+
+Repository preparation is on `feature/3-vercel-neon-deployment`. The dashboard items below are still open. Completing them does not include running a production migration from a laptop. `prisma migrate deploy` runs only as part of a Vercel build for the environment being deployed.
+
+- [ ] Verify Vercel `onyou123` connects to `venuschen999/OnYou`.
+- [ ] Confirm the production branch is `main`.
+- [ ] Configure the Neon production branch and a separate preview branch for the Neon project `onyou`.
+- [ ] Configure `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) for Preview and Production, each pair pointing at its own Neon branch.
+- [ ] Configure `JWT_SECRET` separately for Preview and Production.
+- [ ] Verify Prisma migrations by a Vercel build that runs `npm run vercel-build` against the preview database.
+- [ ] Verify a Preview Deployment for a pull request.
+- [ ] Verify a Production Deployment from `main` after the preview succeeds.
+
+Leave `TEST_DATABASE_URL` and `SHADOW_DATABASE_URL` unset on Vercel. Store values in Vercel environment settings only. `.env.example` keeps the names, with no values.

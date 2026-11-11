@@ -28,6 +28,6 @@ Branching, PRs, and repo process. `AGENTS.md` §10.
 
 - **Decision:** `prisma migrate deploy` reads `DATABASE_URL_UNPOOLED` when that name is set, and `DATABASE_URL` otherwise. The running app keeps using pooled `DATABASE_URL` through the `pg` adapter. `schema.prisma` stays without `url` or `directUrl`. Vercel builds with `vercel-build` (`prisma migrate deploy && next build`). Preview and Production use different Neon branches.
 - **Date / decided by:** 2026-11-10, Partner B (`CollinsCao`), during #3.
-- **Why:** Prisma 7.10 `Datasource` accepts `url` and `shadowDatabaseUrl`. A `directUrl` field in `schema.prisma` is not part of that config. Neon supplies `DATABASE_URL` for the pooled app connection and `DATABASE_URL_UNPOOLED` for migrations. Draft PR #39 targeted the older schema shape.
+- **Why:** Prisma 7.10 `Datasource` accepts `url` and `shadowDatabaseUrl`. A `directUrl` field in `schema.prisma` is not part of that config. Neon supplies `DATABASE_URL` for the pooled app connection and `DATABASE_URL_UNPOOLED` for migrations. Draft PR #39 targeted the older schema shape. The Neon project is `onyou` in Collins' organization. The Vercel project is `onyou123` on Venus's account.
 - **Applies to:** `prisma.config.ts`, `src/lib/server/migrationDatabaseUrl.ts`, `.env.example`, `package.json` `vercel-build`, `docs/deployment.md`.
 - **Status:** Decided.
