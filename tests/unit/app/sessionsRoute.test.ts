@@ -13,6 +13,7 @@ vi.mock("@/lib/server/auth", () => ({
 
 vi.mock("@/lib/server/sessionService", () => ({
   startSession: vi.fn(),
+  listSessionHistory: vi.fn(),
 }));
 
 const USER = {
