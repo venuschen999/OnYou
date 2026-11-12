@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { HistoryScreen } from "@/components/HistoryScreen";
 
 export const metadata: Metadata = { title: "History" };
 
-// docs/agent-memory/auth.md A8.2: placeholder so navigation and redirects work.
-// TODO(#23): build the History screen.
+// TODO(#22): render pages from GET /api/sessions after that contract is on main.
+// This route does not fetch and does not show fixture sessions.
 export default function HistoryPage() {
-  return <h1 className="m-0 text-2xl font-extrabold">History</h1>;
+  return <HistoryScreen phase="loading" />;
 }
