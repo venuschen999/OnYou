@@ -80,9 +80,7 @@ describe("History screen (US8, #23)", () => {
   it("shows completed rewards and abandoned sessions as No rewards", () => {
     ready([ABANDONED, COMPLETED]);
 
-    expect(
-      screen.getByRole("heading", { name: "Your sessions" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Your sessions" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Task" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Date" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Duration" })).toBeTruthy();
@@ -151,7 +149,9 @@ describe("History screen (US8, #23)", () => {
 
     expect(screen.getByText("Loading your sessions…")).toBeTruthy();
     expect(screen.queryByRole("table")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "No sessions yet" })).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "No sessions yet" }),
+    ).toBeNull();
   });
 
   it("shows an error state with Try again", async () => {
@@ -162,9 +162,9 @@ describe("History screen (US8, #23)", () => {
     expect(
       screen.getByRole("heading", { name: "Couldn’t load the history screen" }),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("alert").textContent,
-    ).toContain("Check your internet connection and try again.");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Check your internet connection and try again.",
+    );
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledOnce();
   });

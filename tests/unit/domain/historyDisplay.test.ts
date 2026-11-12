@@ -28,9 +28,9 @@ describe("history display (US8, #23)", () => {
   });
 
   it("names the oldest session in the end-of-list note", () => {
-    expect(historyEndNote(new Date("2026-10-19T23:45:00.000Z"), TIME_ZONE)).toBe(
-      "That’s every session. Your first one was on Mon Oct 19.",
-    );
+    expect(
+      historyEndNote(new Date("2026-10-19T23:45:00.000Z"), TIME_ZONE),
+    ).toBe("That’s every session. Your first one was on Mon Oct 19.");
   });
 
   it("uses the screen labels for outcome, duration, and rewards", () => {
@@ -52,5 +52,11 @@ describe("history display (US8, #23)", () => {
     expect(
       [...entries].sort(compareHistoryNewestFirst).map((entry) => entry.id),
     ).toEqual(["hist_c", "hist_b", "hist_a"]);
+    expect(
+      compareHistoryNewestFirst(
+        { id: "hist_a", startedAt },
+        { id: "hist_a", startedAt },
+      ),
+    ).toBe(0);
   });
 });
