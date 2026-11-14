@@ -16,7 +16,7 @@ Values live in Vercel environment settings. `.env.example` lists names only.
 | `TEST_DATABASE_URL` | unset | unset | required for integration tests | Isolated PostgreSQL 16 database. Never a Neon URL |
 | `SHADOW_DATABASE_URL` | unset | unset | optional, `prisma migrate dev` only | Prisma drift checks |
 
-`DATABASE_URL` on Preview and `DATABASE_URL` on Production point at different Neon branches. The same split applies to `DATABASE_URL_UNPOOLED`. The Neon integration should create one database branch per preview deployment. Production stays on the Neon production branch.
+The Vercel Neon integration sets `DATABASE_URL` and `DATABASE_URL_UNPOOLED` (custom prefix `DATABASE`) for Production and Preview. Production uses the Neon main branch. "Create database branch for deployment" is on for Preview only, so each preview deployment gets its own Neon branch and never touches production data. The integration also adds other `DATABASE_*` names (`DATABASE_PGHOST`, `DATABASE_POSTGRES_PRISMA_URL`, and so on). The app does not read them.
 
 ## Prisma 7
 
@@ -43,16 +43,18 @@ Integration tests set both `DATABASE_URL` and `DATABASE_URL_UNPOOLED` to `TEST_D
 
 ## Accounts
 
-The Vercel project `onyou123` is on Venus's account. The Neon project `onyou` is in Collins' Neon organization. Connect that existing Vercel project to `venuschen999/OnYou`. Do not create a second Vercel project or a second Neon project.
+The Vercel project `onyou123` and its Neon database are on Venus's Vercel account (Hobby and Neon Free plans). The database was created from the project's Storage tab, so Vercel manages its connection variables. The project connects to `venuschen999/OnYou`. Do not create a second Vercel project or Neon database.
+
+An earlier Neon project `onyou` in Collins' Neon organization is not used. A GitHub repository `venuschen999/onyou123`, created by the first Vercel import, is a copy and is not connected.
 
 ## Handoff checklist
 
 Repository preparation is on `feature/3-vercel-neon-deployment`. The dashboard items below are still open. Completing them does not include running a production migration from a laptop. `prisma migrate deploy` runs only as part of a Vercel build for the environment being deployed.
 
 - [ ] Verify Vercel `onyou123` connects to `venuschen999/OnYou`.
-- [ ] Confirm the production branch is `main`.
-- [ ] Configure the Neon production branch and a separate preview branch for the Neon project `onyou`.
-- [ ] Configure `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) for Preview and Production, each pair pointing at its own Neon branch.
+- [x] Confirm the production branch is `main`.
+- [x] Create the Neon database through the Vercel Storage integration, with a database branch per preview deployment.
+- [x] Configure `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) for Preview and Production through that integration.
 - [ ] Configure `JWT_SECRET` separately for Preview and Production.
 - [ ] Verify Prisma migrations by a Vercel build that runs `npm run vercel-build` against the preview database.
 - [ ] Verify a Preview Deployment for a pull request.
