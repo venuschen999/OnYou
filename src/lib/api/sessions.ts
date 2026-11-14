@@ -1,3 +1,11 @@
+export type SessionPetView = {
+  name: string;
+  feedingState: "STARVING" | "HUNGRY" | "FULL";
+  apples: number;
+  feedingMinutes: number;
+  minutesUntilNextApple: number;
+};
+
 export type FocusSessionView = {
   id: string;
   taskName: string;
@@ -9,6 +17,8 @@ export type FocusSessionView = {
   coinsEarned: number;
   feedingMinutesEarned: number;
   applesEarned: number;
+  // Present on a completion response. Other session routes omit it.
+  pet?: SessionPetView;
 };
 
 export class ApiError extends Error {
@@ -95,6 +105,12 @@ export function startSession(input: {
 
 export function heartbeatSession(sessionId: string): Promise<FocusSessionView> {
   return requestJson<FocusSessionView>(`/api/sessions/${sessionId}/heartbeat`, {
+    method: "POST",
+  });
+}
+
+export function completeSession(sessionId: string): Promise<FocusSessionView> {
+  return requestJson<FocusSessionView>(`/api/sessions/${sessionId}/complete`, {
     method: "POST",
   });
 }

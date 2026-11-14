@@ -56,3 +56,19 @@ Starting a focus session. PRD v2.9 §§5–7; `AGENTS.md` §8 and §9.
 - **Why:** AGENTS.md §9 assigns 404 to a missing resource and 403 to a different owner. The PRD does not supply these sentences.
 - **Applies to:** #14 (`heartbeatSession`, `docs/openapi.yaml`).
 - **Status:** Decided.
+
+## S8. Completion returns stored rewards or a 409
+
+- **Decision:** `POST /api/sessions/{id}/complete` requires the owner. `401` `UNAUTHENTICATED`, `403` `FORBIDDEN`, and `404` `SESSION_NOT_FOUND` match the heartbeat route. Completion before `endTime` is `409` `SESSION_TOO_EARLY` with message `This session has not reached its scheduled end.` and leaves the row `ACTIVE`. A session that presence resolution abandons, or that is already `ABANDONED`, is `409` `SESSION_ABANDONED` with message `This session was abandoned and cannot be completed.` The abandon is committed before that error is returned. A `COMPLETED` session returns `200` with its stored coins, feeding minutes, and apples and does not write again. The request body is ignored. No completion token is issued.
+- **Date / decided by:** 2026-11-10, Partner B (`CollinsCao`).
+- **Why:** PRD v2.9 §5.3 says retries return the stored outcome and completion before the scheduled end is rejected. The PRD does not supply these 409 sentences. The OpenAPI skeleton grouped every final session into `409`; a completed retry is `200` so another tab can show the same rewards.
+- **Applies to:** #15 (`completeSession`, `docs/openapi.yaml`).
+- **Status:** Decided.
+
+## S9. Rewards and status commit in one conditional update
+
+- **Decision:** `completeSession` locks the session row, resolves presence, checks `endTime`, checks that the presence deadline is strictly later than `endTime`, then locks the pet row. It sets `COMPLETED` only `WHERE status = 'ACTIVE'`. In that same transaction it increments `Pet.coins` by `coinsEarned` and upserts `DailyFeeding` for `getFeedingDay(endTime, timezone)` to `feedingAfter`. If the conditional update changes no row, the stored final session is returned and balances are not written. A failure after the status write rolls the transaction back, so the session stays `ACTIVE` with no reward change.
+- **Date / decided by:** 2026-11-10, Partner B (`CollinsCao`).
+- **Why:** PRD v2.9 §5.3 and §10 require exactly-once rewards. Reward decision R2 says #15 stores both the earned amounts and the day's totals.
+- **Applies to:** #15 (`completeSession`).
+- **Status:** Decided.
