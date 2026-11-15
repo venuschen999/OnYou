@@ -12,6 +12,7 @@ import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
 import type { StartSessionInput } from "@/lib/validation/session";
 import { prisma } from "./db";
 import { AppError } from "./errors";
+import { feedingDayDate } from "./feedingDayDate";
 
 const MS_PER_MINUTE = 60_000;
 const UNIQUE_VIOLATION = "P2002";
@@ -279,11 +280,6 @@ function abandonedError(): AppError {
   return new AppError("SESSION_ABANDONED", ABANDONED_MESSAGE);
 }
 
-function feedingDayDate(endTime: Date, timeZone: string): Date {
-  // US6: credit the scheduled end's calendar day, even if resolved later.
-  return new Date(`${getFeedingDay(endTime, timeZone)}T00:00:00.000Z`);
-}
-
 async function lockPet(
   tx: Prisma.TransactionClient,
   userId: string,
@@ -386,7 +382,10 @@ async function awardCompletion(
     where: { id: session.userId },
     select: { timezone: true },
   });
-  const feedingDay = feedingDayDate(session.endTime, user.timezone);
+  // US6: credit the scheduled end's calendar day, even if resolved later.
+  const feedingDay = feedingDayDate(
+    getFeedingDay(session.endTime, user.timezone),
+  );
   const feeding = await tx.dailyFeeding.findUnique({
     where: { petId_feedingDay: { petId: pet.id, feedingDay } },
   });
@@ -411,7 +410,9 @@ async function readPetSnapshot(
     where: { id: session.userId },
     select: { timezone: true },
   });
-  const feedingDay = feedingDayDate(session.endTime, user.timezone);
+  const feedingDay = feedingDayDate(
+    getFeedingDay(session.endTime, user.timezone),
+  );
   const feeding = await tx.dailyFeeding.findUnique({
     where: { petId_feedingDay: { petId: pet.id, feedingDay } },
   });
