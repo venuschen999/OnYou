@@ -72,3 +72,19 @@ Starting a focus session. PRD v2.9 §§5–7; `AGENTS.md` §8 and §9.
 - **Why:** PRD v2.9 §5.3 and §10 require exactly-once rewards. Reward decision R2 says #15 stores both the earned amounts and the day's totals.
 - **Applies to:** #15 (`completeSession`).
 - **Status:** Decided.
+
+## S10. Give up on a final session returns the stored outcome
+
+- **Decision:** `POST /api/sessions/{id}/abandon` requires the owner (`401`, `403`, `404` as on heartbeat). It locks the row and runs `resolveSession` first. Before `endTime` it stores `ABANDONED` with zero rewards. At or after `endTime`, when the presence deadline is strictly later than `endTime`, it completes the session with the #15 exactly-once reward update; otherwise it stores `ABANDONED`. A session that is already `ABANDONED` or `COMPLETED` returns `200` with its stored outcome and writes nothing. A `COMPLETED` response includes `pet`; an `ABANDONED` response does not.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 §5.3: Give up after the scheduled end completes a presence-met session, and retried requests return the stored outcome. Returning `200` lets a second tab that also pressed Give up show the same result.
+- **Applies to:** #17 (`abandonSession`, `docs/openapi.yaml`).
+- **Status:** Decided.
+
+## S11. Give up dialog copy
+
+- **Decision:** The dialog title is `Give up this session?`. The body is `Mochi gets nothing from this session, and the N minutes so far won't count. Earlier progress stays safe. This ends the session in every open tab.` with `1 minute` when one whole minute has passed and `the time so far` when less than one minute has passed. Buttons: `Give up` and `Keep focusing`. The pet is named `Mochi` because the running-session response carries no pet name; #10 revisits this with renaming.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** `OnYou_web_mockups.html` Give up confirmation (US7) uses "the 6 minutes so far"; the mockup does not show the singular or under-a-minute cases.
+- **Applies to:** #17 (`GiveUpDialog`, `giveUpMessage`), #10.
+- **Status:** Decided.
