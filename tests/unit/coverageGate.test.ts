@@ -61,8 +61,13 @@ function domainSummary(
   });
 }
 
-function reportText(summary: CoverageSummary | null, sources: readonly string[]) {
-  return evaluateCoverage({ domainSources: sources, summary }).report.join("\n");
+function reportText(
+  summary: CoverageSummary | null,
+  sources: readonly string[],
+) {
+  return evaluateCoverage({ domainSources: sources, summary }).report.join(
+    "\n",
+  );
 }
 
 describe("domain coverage gate (AGENTS.md §6)", () => {
@@ -84,7 +89,10 @@ describe("domain coverage gate (AGENTS.md §6)", () => {
     try {
       const domain = path.join(root, "src", "lib", "domain");
       mkdirSync(domain, { recursive: true });
-      writeFileSync(path.join(domain, "types.d.ts"), "export type Id = string;\n");
+      writeFileSync(
+        path.join(domain, "types.d.ts"),
+        "export type Id = string;\n",
+      );
       writeFileSync(path.join(domain, "rewards.test.ts"), "export {};\n");
       writeFileSync(path.join(domain, ".gitkeep"), "");
 
