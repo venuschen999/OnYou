@@ -66,6 +66,8 @@ AI Development Tool	Cursor
 
 The final implementation must follow the versions and architecture conventions defined in AGENTS.md.
 
+Preview and production deployment, Neon branch isolation, and the Prisma 7 migration command are documented in `docs/deployment.md`.
+
 The HW3 reward experiments use a minimal TypeScript/Vitest environment rather than the full Next.js application.
 
 ⸻
