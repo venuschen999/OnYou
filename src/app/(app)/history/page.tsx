@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { HistoryScreen } from "@/components/HistoryScreen";
+import { HistoryLoader } from "@/components/HistoryLoader";
 
 export const metadata: Metadata = { title: "History" };
 
-// TODO(#22): render pages from GET /api/sessions after that contract is on main.
-// This route does not fetch and does not show fixture sessions.
+// US8: this page reads GET /api/sessions. Dates use the browser zone, which
+// signup stored as the account timezone. The history response has no zone.
 export default function HistoryPage() {
-  return <HistoryScreen phase="loading" />;
+  return <HistoryLoader />;
 }

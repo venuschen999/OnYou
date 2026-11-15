@@ -10,6 +10,31 @@ export type HistoryEntry = {
   feedingMinutesEarned: number;
 };
 
+// `date` is the history API field. The screen calls it startedAt.
+export type HistorySessionFields = {
+  id: string;
+  taskName: string;
+  date: string;
+  durationMinutes: number;
+  outcome: HistoryOutcome;
+  coinsEarned: number;
+  feedingMinutesEarned: number;
+};
+
+export function historyEntryFromSession(
+  item: HistorySessionFields,
+): HistoryEntry {
+  return {
+    id: item.id,
+    taskName: item.taskName,
+    startedAt: item.date,
+    durationMinutes: item.durationMinutes,
+    outcome: item.outcome,
+    coinsEarned: item.coinsEarned,
+    feedingMinutesEarned: item.feedingMinutesEarned,
+  };
+}
+
 type HistoryOrder = { id: string; startedAt: string };
 
 const CLOCK: Intl.DateTimeFormatOptions = {
