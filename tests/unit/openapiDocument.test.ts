@@ -118,6 +118,33 @@ describe("OpenAPI document", () => {
     expect(errorCodes).toContain("SESSION_ABANDONED");
   });
 
+  it("documents GET /api/pet as today's feeding progress (#19)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/pet:");
+    const end = document.indexOf("    patch:", start);
+    const getPet = document.slice(start, end);
+    const schemaStart = document.indexOf("    PetProgress:");
+    const schema = document.slice(schemaStart, schemaStart + 1500);
+
+    expect(getPet).toContain("operationId: getPet");
+    expect(getPet).toContain("authCookie");
+    expect(getPet).toContain('$ref: "#/components/schemas/PetProgress"');
+    expect(getPet).toContain("timezone");
+    expect(schemaStart).toBeGreaterThan(-1);
+    for (const field of [
+      "name",
+      "coins",
+      "applesToday",
+      "feedingMinutesTowardNextApple",
+      "feedingState",
+    ]) {
+      expect(schema).toContain(`${field}:`);
+    }
+    expect(schema).toContain("STARVING");
+    expect(schema).toContain("HUNGRY");
+    expect(schema).toContain("FULL");
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
