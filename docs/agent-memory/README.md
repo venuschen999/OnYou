@@ -12,7 +12,7 @@ Product and technical decisions the team made while working with coding agents, 
 | [pet.md](pet.md) | Default pet (Mochi) creation and naming | #8, #10 |
 | [rewards.md](rewards.md) | Coins, feeding minutes, apples, feeding day | #11, #15, #19, #21 |
 | [sessions.md](sessions.md) | Start session, presence, one active session | #12, #14, #15 |
-| [workflow.md](workflow.md) | Branching, PRs, and repo process | — |
+| [workflow.md](workflow.md) | Branching, PRs, repo process, and deployment | #3 |
 
 ## Entry format
 
