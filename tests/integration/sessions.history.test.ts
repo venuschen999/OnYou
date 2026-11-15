@@ -132,6 +132,16 @@ describe("GET /api/sessions (US8, #22)", () => {
     });
   });
 
+  it("returns an empty page when the account has no final sessions", async () => {
+    const owner = await signUp("jo@school.edu");
+
+    const page = await readPage(
+      await listSessions(historyRequest(owner.token)),
+    );
+
+    expect(page).toEqual({ items: [], nextCursor: null });
+  });
+
   it("lists only the caller's completed and abandoned sessions, newest first", async () => {
     const owner = await signUp("jo@school.edu");
     const other = await signUp("sam@school.edu");
