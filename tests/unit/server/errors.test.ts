@@ -12,6 +12,8 @@ const EXPECTED_STATUS = {
   SESSION_TOO_EARLY: 409,
   SESSION_ABANDONED: 409,
   EMAIL_IN_USE: 409,
+  // AGENTS.md §9: rate limited (password reset, #24).
+  TOO_MANY_REQUESTS: 429,
   INTERNAL_ERROR: 500,
 } as const satisfies Record<ErrorCode, number>;
 
