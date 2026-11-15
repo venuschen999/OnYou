@@ -25,6 +25,8 @@ Students use OnYou for self-directed study or work. Completing a focus session f
 
 Spending coins, shops, pause and resume, custom durations, and social login are out of scope.
 
+The list above is the MVP in the PRD. This revision of `main` implements signup, login, focus sessions (start, heartbeat, completion, and rewards), and the result screen. Home, History, and Settings are placeholders. Password reset, logout, pet renaming, Give up, and history listing are still to be built.
+
 ### Technology stack
 
 Versions and architecture rules are in [AGENTS.md](AGENTS.md). The versions installed in this repository are:
