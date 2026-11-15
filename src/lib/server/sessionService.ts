@@ -1,5 +1,6 @@
 import { Prisma, type FocusSession } from "@prisma/client";
 import { getFeedingDay } from "@/lib/domain/feedingDay";
+import { HISTORY_PAGE_SIZE, historyRewards } from "@/lib/domain/history";
 import { planSessionResolution, presenceDeadline } from "@/lib/domain/presence";
 import {
   calculateRewards,
@@ -9,6 +10,7 @@ import {
   type RewardResult,
 } from "@/lib/domain/rewards";
 import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
+import type { HistoryQuery } from "@/lib/validation/history";
 import type { StartSessionInput } from "@/lib/validation/session";
 import { prisma } from "./db";
 import { AppError } from "./errors";
@@ -20,6 +22,8 @@ const NOT_FOUND_MESSAGE = "No session exists with that id.";
 const FORBIDDEN_MESSAGE = "That session belongs to another account.";
 const TOO_EARLY_MESSAGE = "This session has not reached its scheduled end.";
 const ABANDONED_MESSAGE = "This session was abandoned and cannot be completed.";
+const HISTORY_CURSOR_MESSAGE = "That cursor is not in this account's history.";
+const FINAL_SESSION_STATUSES = ["COMPLETED", "ABANDONED"] as const;
 
 type StoredOutcome =
   | { kind: "completed"; session: FocusSession }
@@ -466,4 +470,114 @@ export async function completeSession(
   if (outcome.kind === "abandoned") throw abandonedError();
   if (outcome.kind === "too-early") throw tooEarlyError();
   return toPublicSession(outcome.session, outcome.pet);
+}
+
+export type HistoryItem = {
+  id: string;
+  taskName: string;
+  date: string;
+  durationMinutes: number;
+  outcome: "COMPLETED" | "ABANDONED";
+  coinsEarned: number;
+  feedingMinutesEarned: number;
+};
+
+export type HistoryPage = {
+  items: HistoryItem[];
+  nextCursor: string | null;
+};
+
+function invalidHistoryCursor(): AppError {
+  return new AppError(
+    "VALIDATION_ERROR",
+    "Check the highlighted fields and try again.",
+    { cursor: HISTORY_CURSOR_MESSAGE },
+  );
+}
+
+function toHistoryItem(session: FocusSession): HistoryItem {
+  const outcome = session.status === "COMPLETED" ? "COMPLETED" : "ABANDONED";
+  const rewards = historyRewards(
+    outcome,
+    session.coinsEarned,
+    session.feedingMinutesEarned,
+  );
+  return {
+    id: session.id,
+    taskName: session.taskName,
+    date: session.startTime.toISOString(),
+    durationMinutes: session.durationMinutes,
+    outcome,
+    coinsEarned: rewards.coinsEarned,
+    feedingMinutesEarned: rewards.feedingMinutesEarned,
+  };
+}
+
+async function resolveOwnedActiveSession(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  now: Date,
+): Promise<void> {
+  const active = await tx.focusSession.findFirst({
+    where: { userId, status: "ACTIVE" },
+  });
+  if (!active) return;
+  // Presence expiry can abandon a session before it is listed (PRD v2.9 §10).
+  await resolveSession(tx, active, now);
+}
+
+async function ownedHistoryCursor(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  cursor: string,
+): Promise<{ id: string; startTime: Date }> {
+  const session = await tx.focusSession.findFirst({
+    where: { id: cursor, userId, status: { in: [...FINAL_SESSION_STATUSES] } },
+    select: { id: true, startTime: true },
+  });
+  if (!session) throw invalidHistoryCursor();
+  return session;
+}
+
+function historyWhere(
+  userId: string,
+  cursor: { id: string; startTime: Date } | null,
+): Prisma.FocusSessionWhereInput {
+  const ownedFinal = {
+    userId,
+    status: { in: [...FINAL_SESSION_STATUSES] },
+  };
+  if (!cursor) return ownedFinal;
+  // Newest first: an earlier startTime, or the same startTime with a smaller id.
+  return {
+    ...ownedFinal,
+    OR: [
+      { startTime: { lt: cursor.startTime } },
+      { startTime: cursor.startTime, id: { lt: cursor.id } },
+    ],
+  };
+}
+
+export async function listSessionHistory(
+  userId: string,
+  query: HistoryQuery,
+  now: Date,
+): Promise<HistoryPage> {
+  return prisma.$transaction(async (tx) => {
+    await resolveOwnedActiveSession(tx, userId, now);
+    const cursor = query.cursor
+      ? await ownedHistoryCursor(tx, userId, query.cursor)
+      : null;
+    const rows = await tx.focusSession.findMany({
+      where: historyWhere(userId, cursor),
+      orderBy: [{ startTime: "desc" }, { id: "desc" }],
+      take: HISTORY_PAGE_SIZE + 1,
+    });
+    const page = rows.slice(0, HISTORY_PAGE_SIZE);
+    const last = page.at(-1);
+    return {
+      items: page.map(toHistoryItem),
+      nextCursor: rows.length > page.length && last ? last.id : null,
+    };
+  });
 }

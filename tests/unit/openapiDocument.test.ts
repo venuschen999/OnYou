@@ -118,6 +118,34 @@ describe("OpenAPI document", () => {
     expect(errorCodes).toContain("SESSION_ABANDONED");
   });
 
+  it("documents GET /api/sessions history pages (US8, #22)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions:\n");
+    const end = document.indexOf("    post:\n", start);
+    const listSessions = document.slice(start, end);
+    const schema = document.slice(document.indexOf("    HistorySession:"));
+
+    expect(listSessions).toContain("operationId: listSessions");
+    expect(listSessions).toContain("authCookie");
+    expect(listSessions).toContain(
+      '$ref: "#/components/schemas/SessionHistoryPage"',
+    );
+    expect(listSessions).toContain("Completed and Abandoned");
+    expect(listSessions).toContain("newest first");
+    expect(listSessions).not.toContain("Field list deferred");
+    expect(schema).toContain("taskName:");
+    expect(schema).toContain("date:");
+    expect(schema).toContain("durationMinutes:");
+    expect(schema).toContain("outcome:");
+    expect(schema).toContain("coinsEarned:");
+    expect(schema).toContain("feedingMinutesEarned:");
+    expect(schema).toContain("COMPLETED");
+    expect(schema).toContain("ABANDONED");
+    expect(schema).not.toMatch(/outcome:[\s\S]*ACTIVE/);
+    expect(document).toContain("nextCursor");
+    expect(document).toContain("default: 20");
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
