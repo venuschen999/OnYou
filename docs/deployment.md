@@ -49,15 +49,15 @@ An earlier Neon project `onyou` in Collins' Neon organization is not used. A Git
 
 ## Handoff checklist
 
-Repository preparation is on `feature/3-vercel-neon-deployment`. The dashboard items below are still open. Completing them does not include running a production migration from a laptop. `prisma migrate deploy` runs only as part of a Vercel build for the environment being deployed.
+Repository preparation is on `feature/3-vercel-neon-deployment`. Every item except the production deployment was verified on 2026-11-14 with PR #54's preview, where signup reached Home. Completing them does not include running a production migration from a laptop. `prisma migrate deploy` runs only as part of a Vercel build for the environment being deployed.
 
-- [ ] Verify Vercel `onyou123` connects to `venuschen999/OnYou`.
+- [x] Verify Vercel `onyou123` connects to `venuschen999/OnYou`.
 - [x] Confirm the production branch is `main`.
 - [x] Create the Neon database through the Vercel Storage integration, with a database branch per preview deployment.
 - [x] Configure `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) for Preview and Production through that integration.
-- [ ] Configure `JWT_SECRET` separately for Preview and Production.
-- [ ] Verify Prisma migrations by a Vercel build that runs `npm run vercel-build` against the preview database.
-- [ ] Verify a Preview Deployment for a pull request.
+- [x] Configure `JWT_SECRET` separately for Preview and Production.
+- [x] Verify Prisma migrations by a Vercel build that runs `npm run vercel-build` against the preview database.
+- [x] Verify a Preview Deployment for a pull request.
 - [ ] Verify a Production Deployment from `main` after the preview succeeds.
 
 Leave `TEST_DATABASE_URL` and `SHADOW_DATABASE_URL` unset on Vercel. Store values in Vercel environment settings only. `.env.example` keeps the names, with no values.
