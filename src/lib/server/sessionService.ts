@@ -455,26 +455,42 @@ async function finishCompletion(
   return withPet(tx, await awardCompletion(tx, resolved));
 }
 
+type GiveUpResult = { session: FocusSession; pet?: SessionPetResponse };
+
+async function completedResult(
+  tx: Prisma.TransactionClient,
+  session: FocusSession,
+): Promise<GiveUpResult> {
+  return { session, pet: await readPetSnapshot(tx, session) };
+}
+
 // docs/agent-memory/sessions.md S10: Give up runs the shared resolution first.
 // A final session returns its stored outcome without writing again.
 async function finishGiveUp(
   tx: Prisma.TransactionClient,
   session: FocusSession,
   now: Date,
-): Promise<FocusSession | CompletionOutcome> {
+): Promise<GiveUpResult> {
   const resolved = await resolveSession(tx, session, now);
-  if (resolved.status === "COMPLETED") {
-    return withPet(tx, { kind: "completed", session: resolved });
-  }
-  if (resolved.status === "ABANDONED") return resolved;
+  if (resolved.status === "COMPLETED") return completedResult(tx, resolved);
+  if (resolved.status === "ABANDONED") return { session: resolved };
 
   const decision = decideGiveUp({
     endTime: resolved.endTime,
     lastHeartbeatAt: resolved.lastHeartbeatAt,
     now,
   });
-  if (decision === "ABANDON") return abandonActive(tx, resolved);
-  return withPet(tx, await awardCompletion(tx, resolved));
+  if (decision === "ABANDON") {
+    return { session: await abandonActive(tx, resolved) };
+  }
+  // The row lock from loadOwnedSession means this update cannot lose a race.
+  const stored = await awardCompletion(tx, resolved);
+  if (stored.kind === "completed") return completedResult(tx, stored.session);
+  return {
+    session: await tx.focusSession.findUniqueOrThrow({
+      where: { id: resolved.id },
+    }),
+  };
 }
 
 export async function abandonSession(
@@ -482,19 +498,11 @@ export async function abandonSession(
   sessionId: string,
   now: Date,
 ): Promise<SessionResponse> {
-  const outcome = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const session = await loadOwnedSession(tx, userId, sessionId);
     return finishGiveUp(tx, session, now);
   });
-  if (!("kind" in outcome)) return toPublicSession(outcome);
-  if (outcome.kind === "completed") {
-    return toPublicSession(outcome.session, outcome.pet);
-  }
-  // awardCompletion found the row already abandoned by a concurrent request.
-  const stored = await prisma.focusSession.findUniqueOrThrow({
-    where: { id: sessionId },
-  });
-  return toPublicSession(stored);
+  return toPublicSession(result.session, result.pet);
 }
 
 export async function completeSession(
