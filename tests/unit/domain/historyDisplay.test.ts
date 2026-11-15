@@ -6,6 +6,7 @@ import {
   formatHistoryFeeding,
   formatHistoryWhen,
   historyEndNote,
+  historyEntryFromSession,
   historyOutcomeLabel,
 } from "@/lib/domain/historyDisplay";
 
@@ -39,6 +40,28 @@ describe("history display (US8, #23)", () => {
     expect(formatHistoryDuration(25)).toBe("25 min");
     expect(formatHistoryCoins(25)).toBe("+25 coins");
     expect(formatHistoryFeeding(15)).toBe("+15 feeding min");
+  });
+
+  it("maps an API history item onto a screen entry", () => {
+    expect(
+      historyEntryFromSession({
+        id: "session_new",
+        taskName: "Essay draft: intro",
+        date: "2026-11-09T20:00:00.000Z",
+        durationMinutes: 25,
+        outcome: "COMPLETED",
+        coinsEarned: 25,
+        feedingMinutesEarned: 25,
+      }),
+    ).toEqual({
+      id: "session_new",
+      taskName: "Essay draft: intro",
+      startedAt: "2026-11-09T20:00:00.000Z",
+      durationMinutes: 25,
+      outcome: "COMPLETED",
+      coinsEarned: 25,
+      feedingMinutesEarned: 25,
+    });
   });
 
   it("orders equal start times by id descending", () => {
