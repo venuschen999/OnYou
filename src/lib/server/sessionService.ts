@@ -1,5 +1,6 @@
 import { Prisma, type FocusSession } from "@prisma/client";
 import { getFeedingDay } from "@/lib/domain/feedingDay";
+import { decideGiveUp } from "@/lib/domain/giveUp";
 import { planSessionResolution, presenceDeadline } from "@/lib/domain/presence";
 import {
   calculateRewards,
@@ -452,6 +453,48 @@ async function finishCompletion(
     return { kind: "abandoned" };
   }
   return withPet(tx, await awardCompletion(tx, resolved));
+}
+
+// docs/agent-memory/sessions.md S10: Give up runs the shared resolution first.
+// A final session returns its stored outcome without writing again.
+async function finishGiveUp(
+  tx: Prisma.TransactionClient,
+  session: FocusSession,
+  now: Date,
+): Promise<FocusSession | CompletionOutcome> {
+  const resolved = await resolveSession(tx, session, now);
+  if (resolved.status === "COMPLETED") {
+    return withPet(tx, { kind: "completed", session: resolved });
+  }
+  if (resolved.status === "ABANDONED") return resolved;
+
+  const decision = decideGiveUp({
+    endTime: resolved.endTime,
+    lastHeartbeatAt: resolved.lastHeartbeatAt,
+    now,
+  });
+  if (decision === "ABANDON") return abandonActive(tx, resolved);
+  return withPet(tx, await awardCompletion(tx, resolved));
+}
+
+export async function abandonSession(
+  userId: string,
+  sessionId: string,
+  now: Date,
+): Promise<SessionResponse> {
+  const outcome = await prisma.$transaction(async (tx) => {
+    const session = await loadOwnedSession(tx, userId, sessionId);
+    return finishGiveUp(tx, session, now);
+  });
+  if (!("kind" in outcome)) return toPublicSession(outcome);
+  if (outcome.kind === "completed") {
+    return toPublicSession(outcome.session, outcome.pet);
+  }
+  // awardCompletion found the row already abandoned by a concurrent request.
+  const stored = await prisma.focusSession.findUniqueOrThrow({
+    where: { id: sessionId },
+  });
+  return toPublicSession(stored);
 }
 
 export async function completeSession(
