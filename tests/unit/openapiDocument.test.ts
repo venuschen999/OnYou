@@ -249,6 +249,24 @@ describe("OpenAPI document", () => {
     expect(logoutRoute).not.toContain("sessionStorage");
   });
 
+  it("documents PATCH /api/pet as a trimmed rename that returns progress (#10)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/pet:");
+    const patchStart = document.indexOf("    patch:", start);
+    const end = document.indexOf("\n  /api/", patchStart);
+    const patchPet = document.slice(patchStart, end);
+
+    expect(patchPet).toContain("operationId: updatePet");
+    expect(patchPet).toContain("authCookie");
+    expect(patchPet).toContain("requestBody:");
+    expect(patchPet).toContain("maxLength: 30");
+    expect(patchPet).toContain("Mochi");
+    expect(patchPet).toContain('$ref: "#/components/schemas/PetProgress"');
+    expect(patchPet).toContain(
+      "Pet names can be up to 30 characters. This one has 35.",
+    );
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
