@@ -644,3 +644,125 @@ describe("Give up (US7, #17)", () => {
     expect(screen.getAllByText("+25", { selector: "b" })).toHaveLength(2);
   });
 });
+
+describe("Leaving Focus after a finished session (#76)", () => {
+  const SETUP_HEADING = "What are you working on?";
+
+  function indexOf(part: string): number {
+    return requests.findIndex((entry) => entry.url.includes(part));
+  }
+
+  // Focus mounted inside the provider, then unmounted and mounted again, the
+  // way navigating to Home and back does (SessionPresence stays mounted).
+  function renderPresence(withFocus: boolean) {
+    return (
+      <SessionPresence>
+        <ActiveSessionNotice />
+        {withFocus ? <FocusScreen /> : null}
+      </SessionPresence>
+    );
+  }
+
+  async function giveUpWith(outcome: Record<string, unknown>): Promise<void> {
+    fireEvent.click(screen.getByRole("button", { name: "Give up" }));
+    const dialog = screen.getByRole("dialog", {
+      name: "Give up this session?",
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Give up" }));
+    await settle(indexOf("/abandon"), jsonResponse(outcome));
+  }
+
+  it("shows setup after leaving an abandoned session's result", async () => {
+    const view = render(renderPresence(true));
+    await settle(0, jsonResponse(session()));
+    await giveUpWith(session({ status: "ABANDONED" }));
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Session ended early" }),
+    ).toBeTruthy();
+
+    view.rerender(renderPresence(false));
+    view.rerender(renderPresence(true));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: SETUP_HEADING }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Session ended early")).toBeNull();
+  });
+
+  it("shows setup after leaving a completed session's result", async () => {
+    const view = render(renderPresence(true));
+    await settle(0, jsonResponse(session()));
+    await giveUpWith({
+      ...session({
+        status: "COMPLETED",
+        coinsEarned: 25,
+        feedingMinutesEarned: 25,
+        applesEarned: 1,
+      }),
+      pet: {
+        name: "Mochi",
+        feedingState: "HUNGRY",
+        apples: 1,
+        feedingMinutes: 25,
+        minutesUntilNextApple: 25,
+      },
+    });
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Session complete" }),
+    ).toBeTruthy();
+
+    view.rerender(renderPresence(false));
+    view.rerender(renderPresence(true));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: SETUP_HEADING }),
+    ).toBeTruthy();
+  });
+
+  it("still shows a result that arrived while away, then clears it after leaving", async () => {
+    const view = render(renderPresence(false));
+    await settle(0, jsonResponse(session()));
+    // Another tab gave up: this tab learns it from its next heartbeat.
+    await settle(
+      indexOf("/heartbeat"),
+      jsonResponse(session({ status: "ABANDONED" })),
+    );
+    await settle(
+      indexOf("/complete"),
+      jsonResponse(
+        {
+          error: {
+            code: "SESSION_ABANDONED",
+            message: "This session was abandoned and cannot be completed.",
+          },
+        },
+        409,
+      ),
+    );
+
+    view.rerender(renderPresence(true));
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Session ended early" }),
+    ).toBeTruthy();
+
+    view.rerender(renderPresence(false));
+    view.rerender(renderPresence(true));
+    expect(
+      screen.getByRole("heading", { level: 1, name: SETUP_HEADING }),
+    ).toBeTruthy();
+  });
+
+  it("keeps an Active session when leaving and coming back", async () => {
+    const view = render(renderPresence(true));
+    await settle(0, jsonResponse(session()));
+    expect(screen.getByText("Essay draft: intro")).toBeTruthy();
+
+    view.rerender(renderPresence(false));
+    view.rerender(renderPresence(true));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Essay draft: intro" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Give up" })).toBeTruthy();
+  });
+});

@@ -96,3 +96,11 @@ Starting a focus session. PRD v2.9 §§5–7; `AGENTS.md` §8 and §9.
 - **Why:** PRD v2.9 §5.3 says logout abandons the session, and also that a session completes when its presence deadline is later than the scheduled end. After that end the session has already met the completion rule, so taking its rewards away on logout would contradict §5.3. Before the end, logout abandons as the PRD states.
 - **Applies to:** #18 (`logOut`, `sessionService`).
 - **Status:** Decided.
+
+## S13. Leaving Focus after a result starts the next visit at setup
+
+- **Decision:** A Completed or Abandoned result shows on Focus until the user leaves Focus. When Focus unmounts after showing a result, it calls `forgetSession`, so the next visit shows "What are you working on?". A result that arrived while the user was on another screen still shows on the next visit to Focus, then clears after leaving. An Active session is never forgotten by leaving. Completion is still requested only once.
+- **Date / decided by:** 2026-11-16, Partner A (`venuschen999`), from a bug found in user-testing preparation.
+- **Why:** `SessionPresence` lives in the root layout and kept the finished session, so Focus showed the old result on every visit. After an Abandoned session the result has no "Start another session" button, so users could not start a new session at all.
+- **Applies to:** #76 (`FocusScreen`); replaces #16's "keeps a confirmed result across navigation away and back" test with "starts at setup after leaving a confirmed result, without completing again".
+- **Status:** Decided.
