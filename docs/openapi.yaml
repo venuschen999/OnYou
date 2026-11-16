@@ -162,13 +162,58 @@ paths:
       operationId: confirmPasswordReset
       summary: Set a new password
       description: >
-        A successful reset signs the account out everywhere. It does not
-        abandon an Active focus session by itself.
+        Sets a new password from an emailed reset link. In one transaction
+        the server stores the new bcrypt hash, increments tokenVersion so
+        every existing session is signed out, marks the link used, and
+        deletes the account's other unused links. The response also clears
+        this browser's auth cookie. A reset does not abandon an Active focus
+        session by itself; signing out stops heartbeats. A used, expired,
+        unknown, or missing token gets the same RESET_LINK_INVALID error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                token:
+                  type: string
+                  description: The token from the reset link.
+                password:
+                  $ref: "#/components/schemas/Password"
       responses:
         "200":
           description: The password was updated.
+          headers:
+            Set-Cookie:
+              description: Clears the auth cookie (Max-Age=0).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Password updated. Log in with your new password.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: >
+            The password breaks the 8 to 15 character rule (VALIDATION_ERROR),
+            or the link is used, expired, or unknown (RESET_LINK_INVALID).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidLink:
+                  value:
+                    error:
+                      code: RESET_LINK_INVALID
+                      message: This link no longer works.
   /api/pet:
     get:
       tags: [Pet]
@@ -197,7 +242,13 @@ paths:
       summary: List focus history
       description: >
         Returns the authenticated account's Completed and Abandoned sessions,
-        newest first, 20 per page.
+        newest first, 20 per page. Active sessions are omitted. Each item's
+        date is that session's startTime in UTC. When start times are equal,
+        the greater session id comes first. An Abandoned session reports zero
+        coins and zero feeding minutes. The cursor is the id of a final
+        session belonging to this account.
+      security:
+        - authCookie: []
       parameters:
         - $ref: "#/components/parameters/HistoryCursor"
         - $ref: "#/components/parameters/HistoryLimit"
@@ -499,6 +550,7 @@ components:
       description: Page size. History pages contain 20 sessions.
       schema:
         type: integer
+        enum: [20]
         default: 20
   schemas:
     Email:
@@ -642,6 +694,7 @@ components:
               type: string
               enum:
                 - VALIDATION_ERROR
+                - RESET_LINK_INVALID
                 - EMAIL_IN_USE
                 - INVALID_CREDENTIALS
                 - UNAUTHENTICATED
@@ -659,6 +712,39 @@ components:
               description: Per-field messages for form display, keyed by field name.
               additionalProperties:
                 type: string
+    HistorySession:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - taskName
+        - date
+        - durationMinutes
+        - outcome
+        - coinsEarned
+        - feedingMinutesEarned
+      properties:
+        id:
+          type: string
+        taskName:
+          type: string
+          example: Essay draft: intro
+        date:
+          type: string
+          format: date-time
+          description: Session startTime in UTC. Pages are ordered by this instant.
+        durationMinutes:
+          type: integer
+          enum: [15, 25, 50]
+        outcome:
+          type: string
+          enum: [COMPLETED, ABANDONED]
+        coinsEarned:
+          type: integer
+          minimum: 0
+        feedingMinutesEarned:
+          type: integer
+          minimum: 0
     SessionHistoryPage:
       type: object
       additionalProperties: false
@@ -667,12 +753,9 @@ components:
         items:
           type: array
           description: >
-            Focus sessions for the authenticated account, newest first.
-            The fields of each session are specified in a later revision.
+            Completed and Abandoned sessions for this account, newest first.
           items:
-            type: object
-            additionalProperties: true
-            description: One history entry. Field list deferred.
+            $ref: "#/components/schemas/HistorySession"
         nextCursor:
           type: [string, "null"]
           description: >

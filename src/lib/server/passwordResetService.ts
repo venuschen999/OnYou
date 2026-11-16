@@ -1,13 +1,17 @@
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import {
   RESET_REQUESTS_PER_EMAIL,
   RESET_REQUESTS_PER_IP,
   isOverLimit,
   rateWindowStart,
 } from "@/lib/domain/rateLimit";
-import type { PasswordResetRequestInput } from "@/lib/validation/auth";
+import type {
+  PasswordResetConfirmInput,
+  PasswordResetRequestInput,
+} from "@/lib/validation/auth";
 import { prisma } from "./db";
 import { AppError } from "./errors";
+import { hashPassword } from "./password";
 import {
   buildResetLink,
   sendPasswordResetEmail,
@@ -89,4 +93,59 @@ export async function requestPasswordReset(
     const reason = error instanceof Error ? error.message : "unknown error";
     console.error(`Password reset email was not sent: ${reason}`);
   }
+}
+
+const INVALID_LINK_MESSAGE = "This link no longer works.";
+
+function invalidLink(): AppError {
+  return new AppError("RESET_LINK_INVALID", INVALID_LINK_MESSAGE);
+}
+
+// AGENTS.md §12: compare in constant time, even though the row was found by
+// this hash.
+function hashesMatch(stored: string, computed: string): boolean {
+  const left = Buffer.from(stored, "hex");
+  const right = Buffer.from(computed, "hex");
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+async function findUsableToken(
+  token: string | undefined,
+  now: Date,
+): Promise<{ id: string; userId: string }> {
+  if (!token) throw invalidLink();
+  const tokenHash = hashResetToken(token);
+  const row = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
+  });
+  if (!row || !hashesMatch(row.tokenHash, tokenHash)) throw invalidLink();
+  if (row.usedAt || now.getTime() >= row.expiresAt.getTime()) {
+    throw invalidLink();
+  }
+  return row;
+}
+
+// auth.md A15: password, tokenVersion, and the link change together. The
+// conditional update means two tabs cannot both use one link. No
+// FocusSession is touched (PRD v2.9 US2).
+export async function confirmPasswordReset(
+  input: PasswordResetConfirmInput,
+  now: Date,
+): Promise<void> {
+  const row = await findUsableToken(input.token, now);
+  const passwordHash = await hashPassword(input.password);
+  await prisma.$transaction(async (tx) => {
+    const used = await tx.passwordResetToken.updateMany({
+      where: { id: row.id, usedAt: null },
+      data: { usedAt: now },
+    });
+    if (used.count !== 1) throw invalidLink();
+    await tx.user.update({
+      where: { id: row.userId },
+      data: { passwordHash, tokenVersion: { increment: 1 } },
+    });
+    await tx.passwordResetToken.deleteMany({
+      where: { userId: row.userId, usedAt: null },
+    });
+  });
 }
