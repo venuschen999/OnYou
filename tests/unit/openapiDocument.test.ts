@@ -145,6 +145,75 @@ describe("OpenAPI document", () => {
     expect(schema).toContain("FULL");
   });
 
+  it("documents GET /api/sessions history pages (US8, #22)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions:\n");
+    const end = document.indexOf("    post:\n", start);
+    const listSessions = document.slice(start, end);
+    const schema = document.slice(document.indexOf("    HistorySession:"));
+
+    expect(listSessions).toContain("operationId: listSessions");
+    expect(listSessions).toContain("authCookie");
+    expect(listSessions).toContain(
+      '$ref: "#/components/schemas/SessionHistoryPage"',
+    );
+    expect(listSessions).toContain("Completed and Abandoned");
+    expect(listSessions).toContain("newest first");
+    expect(listSessions).not.toContain("Field list deferred");
+    expect(schema).toContain("taskName:");
+    expect(schema).toContain("date:");
+    expect(schema).toContain("durationMinutes:");
+    expect(schema).toContain("outcome:");
+    expect(schema).toContain("coinsEarned:");
+    expect(schema).toContain("feedingMinutesEarned:");
+    expect(schema).toContain("COMPLETED");
+    expect(schema).toContain("ABANDONED");
+    expect(schema).not.toMatch(/outcome:[\s\S]*ACTIVE/);
+    expect(document).toContain("nextCursor");
+    expect(document).toContain("default: 20");
+  });
+
+  it("documents the password reset request as uniform and rate limited (#24)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/password-reset/request:");
+    const end = document.indexOf("  /api/auth/password-reset/confirm:");
+    const resetRequest = document.slice(start, end);
+    const tooMany = document.slice(document.indexOf("    TooManyRequests:"));
+
+    expect(resetRequest).toContain("operationId: requestPasswordReset");
+    expect(resetRequest).toContain("requestBody:");
+    expect(resetRequest).toContain("email");
+    expect(resetRequest).toContain(
+      "If an account exists for that email, a reset link is on its way.",
+    );
+    expect(resetRequest).toContain("30 minutes");
+    expect(resetRequest).toContain("Resend");
+    expect(resetRequest).toContain('"429"');
+    expect(tooMany).toContain("TOO_MANY_REQUESTS");
+    expect(tooMany).toContain(
+      "Too many reset requests. Wait a few minutes, then try again.",
+    );
+  });
+
+  it("documents the password reset confirm as one transaction that signs out (#25)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/password-reset/confirm:");
+    const end = document.indexOf("\n  /api/", start + 10);
+    const confirm = document.slice(start, end);
+
+    expect(confirm).toContain("operationId: confirmPasswordReset");
+    expect(confirm).toContain("requestBody:");
+    expect(confirm).toContain("token");
+    expect(confirm).toContain("password");
+    expect(confirm).toContain("RESET_LINK_INVALID");
+    expect(confirm).toContain("This link no longer works.");
+    expect(confirm).toContain("tokenVersion");
+    expect(confirm).toContain(
+      "Password updated. Log in with your new password.",
+    );
+    expect(confirm).toContain("does not abandon");
+  });
+
   it("documents POST /api/sessions/{id}/abandon as Give up with a stored outcome (#17)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/{id}/abandon:");

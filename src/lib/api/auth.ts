@@ -52,7 +52,7 @@ async function toApiError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, error.code, error.message, fields);
 }
 
-async function postForUser(path: string, body: unknown): Promise<ApiUser> {
+async function postJson<T>(path: string, body: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -64,7 +64,11 @@ async function postForUser(path: string, body: unknown): Promise<ApiUser> {
     throw new ApiError(NETWORK_STATUS, "NETWORK_ERROR", SERVER_ERROR_MESSAGE);
   }
   if (!response.ok) throw await toApiError(response);
-  const data = (await response.json()) as { user: ApiUser };
+  return (await response.json()) as T;
+}
+
+async function postForUser(path: string, body: unknown): Promise<ApiUser> {
+  const data = await postJson<{ user: ApiUser }>(path, body);
   return data.user;
 }
 
@@ -74,4 +78,21 @@ export function signUp(input: SignupRequest): Promise<ApiUser> {
 
 export function logIn(input: LoginRequest): Promise<ApiUser> {
   return postForUser("/api/auth/login", input);
+}
+
+// US2: the server answers the same way for every email (auth.md A11).
+export async function requestPasswordReset(email: string): Promise<void> {
+  await postJson<{ message: string }>("/api/auth/password-reset/request", {
+    email,
+  });
+}
+
+export async function confirmPasswordReset(input: {
+  token: string;
+  password: string;
+}): Promise<void> {
+  await postJson<{ message: string }>(
+    "/api/auth/password-reset/confirm",
+    input,
+  );
 }
