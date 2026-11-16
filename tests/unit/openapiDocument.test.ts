@@ -202,12 +202,13 @@ describe("OpenAPI document", () => {
   it("leaves history item fields for unmerged pull request #56", () => {
     const document = loadOpenApiDocument();
     const history = operationBlock(document, "/api/sessions", "get");
+    const page = document.slice(document.indexOf("    SessionHistoryPage:"));
 
     expect(document).toContain("Pull request #56");
     expect(document).toContain("issue #22");
-    expect(history).toContain("later revision");
+    expect(page).toContain("later revision");
     expect(history).not.toContain("x-implementation: shipped");
-    expect(history).not.toContain("HistorySession");
+    expect(document).not.toContain("HistorySession");
   });
 
   it("resolves internal references and hides secrets and completion tokens", () => {

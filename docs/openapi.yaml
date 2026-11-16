@@ -5,20 +5,31 @@ info:
   description: |
     OnYou turns focus time into care for a virtual pet (PRD v2.9).
     All bodies are JSON with camelCase fields; timestamps are ISO 8601 UTC.
-    Authentication is a JWT in the HttpOnly `onyou_auth` cookie.
-    A focus session belongs to the account: any authenticated tab of the
-    owner may heartbeat, give up, or request completion. Protected
-    operations require that authenticated account. Signup, login, starting
-    a session, heartbeats, and completion match the implemented API.
-    Resource field lists for the remaining paths are completed in a later
-    revision.
+    Authentication is a JWT in the HttpOnly `onyou_auth` cookie. The JWT
+    subject is the user id and the `tv` claim is tokenVersion. This document
+    contains no secrets.
+    A focus session belongs to the account. Any authenticated tab of the
+    owner may heartbeat or request completion. Protected operations require
+    that cookie. There is no focus-session token header.
+    Shipped operations match a route on main: signup, login, start session,
+    read the Active session, heartbeat, and complete.
+    Planned operations have no route. Logout waits on issue #18.
+    Password-reset request waits on issue #24. Password-reset confirm waits
+    on issue #25. Reading the pet waits on issue #19. Renaming the pet waits
+    on issue #10. Give up waits on issue #17. Those descriptions are plans,
+    not shipped contracts.
+    GET /api/sessions is not on main. The history route is issue #22, added
+    in draft Pull request #56, including the history item fields. This document
+    leaves that field list for a later revision so the two edits do not overlap.
 servers:
   - url: /
+security:
+  - authCookie: []
 tags:
   - name: Auth
-    description: Account access and password reset.
+    description: Account access. Password reset is not implemented.
   - name: Pet
-    description: The authenticated account's pet.
+    description: Pet read and rename. Neither route is implemented.
   - name: Sessions
     description: Account-owned focus sessions.
 paths:
@@ -26,6 +37,7 @@ paths:
     post:
       tags: [Auth]
       summary: Create an account and its default pet, Mochi
+      x-implementation: shipped
       description: |
         Creates the user and the pet in one transaction and signs the user in.
         The email is trimmed and lowercased. A missing or unknown `timezone`
@@ -68,6 +80,7 @@ paths:
     post:
       tags: [Auth]
       summary: Log in with email and password
+      x-implementation: shipped
       description: |
         Matches the email case-insensitively. A wrong email and a wrong
         password return the same 401 response.
@@ -108,62 +121,93 @@ paths:
       tags: [Auth]
       operationId: logout
       summary: Log out
-      description: >
-        Signing out stops heartbeats. Logging out during an Active session
-        abandons that session on every device.
+      x-implementation: planned
+      security:
+        - authCookie: []
+      description: |
+        Not implemented. No route is registered (issue #18).
+        Planned behavior, not a shipped contract: signing out stops
+        heartbeats. Logging out during an Active session asks for
+        confirmation, then abandons that session on every device.
+        The request and response contract is documented when issue #18 merges.
       responses:
-        "200":
-          description: The account is logged out.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: |
+            Not implemented. The server has no logout route, so this path
+            is not found.
   /api/auth/password-reset/request:
     post:
       tags: [Auth]
       operationId: requestPasswordReset
       summary: Request a password reset
-      description: >
-        The response is the same whether or not the email matches an account.
+      x-implementation: planned
+      security: []
+      description: |
+        Not implemented. No route is registered (issue #24).
+        Planned behavior, not a shipped contract: the response is the same
+        whether or not the email matches an account, and requests are rate
+        limited. Setting the new password depends on issue #25. Request and
+        response schemas are documented when those issues merge.
       responses:
-        "200":
-          description: The reset request was accepted.
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "429":
-          $ref: "#/components/responses/TooManyRequests"
+        "404":
+          description: |
+            Not implemented. The server has no password-reset request route,
+            so this path is not found. Missing documentation depends on
+            issue #24 and issue #25.
   /api/auth/password-reset/confirm:
     post:
       tags: [Auth]
       operationId: confirmPasswordReset
       summary: Set a new password
-      description: >
-        A successful reset signs the account out everywhere. It does not
-        abandon an Active focus session by itself.
+      x-implementation: planned
+      security: []
+      description: |
+        Not implemented. No route is registered (issue #25).
+        Planned behavior, not a shipped contract: a successful reset signs
+        the account out everywhere by incrementing tokenVersion. It does not
+        abandon an Active focus session by itself. The request body, success
+        response, and error responses are documented when issue #25 merges.
       responses:
-        "200":
-          description: The password was updated.
-        "400":
-          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: |
+            Not implemented. The server has no password-reset confirm route,
+            so this path is not found.
   /api/pet:
     get:
       tags: [Pet]
       operationId: getPet
       summary: Get the account pet
+      x-implementation: planned
+      security:
+        - authCookie: []
+      description: |
+        Not implemented. No route is registered (issue #19).
+        The feeding-progress response schema is not documented here. It is
+        added when issue #19 merges. Signup still creates the default pet,
+        Mochi, but this read is not a shipped endpoint.
       responses:
-        "200":
-          description: The authenticated account's pet.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: |
+            Not implemented. The server has no pet route, so this path is
+            not found. Missing documentation depends on issue #19.
     patch:
       tags: [Pet]
       operationId: updatePet
       summary: Rename the account pet
+      x-implementation: planned
+      security:
+        - authCookie: []
+      description: |
+        Not implemented. No route is registered (issue #10).
+        The rename request and response are documented when issue #10 merges.
+        A blank name is planned to fall back to Mochi, and names over 30
+        characters are planned to be rejected. That rule is not a shipped
+        contract.
       responses:
-        "200":
-          description: The updated pet.
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: |
+            Not implemented. The server has no pet route, so this path is
+            not found. Missing documentation depends on issue #10.
   /api/sessions:
     get:
       tags: [Sessions]
@@ -190,6 +234,7 @@ paths:
       tags: [Sessions]
       operationId: startSession
       summary: Start a focus session
+      x-implementation: shipped
       description: >
         Creates the account's single Active session. The server sets
         startTime, endTime, and lastHeartbeatAt. lastHeartbeatAt is the
@@ -215,7 +260,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/FocusSession"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: |
+            The body is not JSON, durationMinutes is not 15, 25, or 50,
+            or taskName is not text or is longer than 80 characters.
+            Over-limit input is rejected and is never truncated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                duration:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Check the highlighted fields and try again.
+                      fields:
+                        durationMinutes: Choose 15, 25, or 50 minutes.
+                taskName:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Check the highlighted fields and try again.
+                      fields:
+                        taskName: Task names can be up to 80 characters. This one has 81.
+                notJson:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Request body must be valid JSON.
         "401":
           $ref: "#/components/responses/Unauthorized"
         "409":
@@ -228,11 +300,14 @@ paths:
                 error:
                   code: ACTIVE_SESSION_EXISTS
                   message: One session at a time
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/active:
     get:
       tags: [Sessions]
       operationId: getActiveSession
       summary: Get the account's Active session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may read the same Active session.
         The server resolves presence before it responds. A session whose
@@ -254,11 +329,14 @@ paths:
                   - type: "null"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/heartbeat:
     post:
       tags: [Sessions]
       operationId: heartbeatSession
       summary: Record a heartbeat
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may send this request. The server
         resolves the session from stored timestamps before it renews
@@ -302,24 +380,34 @@ paths:
                 error:
                   code: SESSION_NOT_FOUND
                   message: No session exists with that id.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/complete:
     post:
       tags: [Sessions]
       operationId: completeSession
       summary: Complete a focus session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may request completion. The
         server clock is authoritative. Completion before the scheduled end
         is rejected. The session completes only when it was not abandoned
         and its presence deadline is strictly later than the scheduled end.
-        Rewards are computed on the server from the session duration and the
-        feeding day of endTime, then stored once in the same transaction that
-        sets status to COMPLETED. A retry returns the stored rewards and does
+        Rewards are computed on the server and stored once in the same
+        transaction that sets status to COMPLETED.
+        A Completed session earns its duration in coins.
+        Feeding minutes for that feeding day increase
+        by the duration and are capped at 50; minutes past the cap are
+        discarded. One apple is credited per 25 feeding minutes on that day,
+        at most 2. Leftover minutes stay on the same day. Coins keep accruing
+        after Full and are not cleared by the daily reset. The feeding day is
+        the session endTime in the user's saved IANA timezone, including when
+        resolution happens later. A retry returns the stored rewards and does
         not award them again. The response adds a pet snapshot for that feeding
         day: feedingState and minutesUntilNextApple. An Abandoned session stays
-        Abandoned and cannot be revived. A request body is ignored, including
-        any client-supplied coins, feeding minutes, or apples. No completion
-        token is used.
+        Abandoned, earns nothing, and cannot be revived. A request body is
+        ignored, including any client-supplied coins, feeding minutes, or
+        apples. No completion token is used.
       security:
         - authCookie: []
       parameters:
@@ -381,32 +469,30 @@ paths:
                     error:
                       code: SESSION_ABANDONED
                       message: This session was abandoned and cannot be completed.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/abandon:
     post:
       tags: [Sessions]
       operationId: abandonSession
       summary: Give up a focus session
-      description: >
-        Any authenticated tab of the owner may give up. Confirming before the
-        scheduled end abandons the session. Confirming after the scheduled end,
-        when presence was met, completes it.
+      x-implementation: planned
+      security:
+        - authCookie: []
+      description: |
+        Not implemented. No route is registered (issue #17).
+        Planned behavior, not a shipped contract: any authenticated tab of
+        the owner may give up. Confirming before the scheduled end abandons
+        the session. Confirming after the scheduled end, when presence was
+        met, completes it. The request and response contract is documented
+        when issue #17 merges.
       parameters:
         - $ref: "#/components/parameters/SessionId"
       responses:
-        "200":
-          description: The session was resolved.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: The session is already resolved.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          description: |
+            Not implemented. The server has no abandon route, so this path
+            is not found. Missing documentation depends on issue #17.
 components:
   securitySchemes:
     authCookie:
@@ -417,7 +503,8 @@ components:
     AuthCookie:
       description: |
         `onyou_auth=<JWT>; Path=/; Max-Age=604800; Secure; HttpOnly; SameSite=Lax`.
-        The JWT carries the user id and tokenVersion and expires after 7 days.
+        The JWT subject is the user id, the `tv` claim is tokenVersion, and
+        the token expires after 7 days. The signing secret is not documented.
       schema:
         type: string
   parameters:
@@ -523,7 +610,7 @@ components:
           type: string
         taskName:
           type: string
-          example: Essay draft: intro
+          example: "Essay draft: intro"
         durationMinutes:
           type: integer
           enum: [15, 25, 50]
@@ -541,10 +628,21 @@ components:
           format: date-time
         coinsEarned:
           type: integer
+          minimum: 0
+          description: >
+            Coins stored for this session. Equal to the duration when
+            Completed, and 0 while Active or Abandoned.
         feedingMinutesEarned:
           type: integer
+          minimum: 0
+          description: >
+            Feeding minutes stored for this session after the daily cap of 50.
+            0 while Active or Abandoned.
         applesEarned:
           type: integer
+          minimum: 0
+          description: >
+            Apples stored for this session. 0 while Active or Abandoned.
     SessionPet:
       type: object
       description: Pet feeding state after a completed session's stored rewards.
@@ -639,33 +737,25 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Something went wrong. Try again.
     BadRequest:
-      description: The request failed validation.
+      description: |
+        Shared validation shape. The history sketch uses it. Shipped session
+        start documents its own field examples.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
-      description: The request is not authenticated.
+      description: The request has no valid onyou_auth cookie.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-    Forbidden:
-      description: The authenticated account does not own this session.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-    NotFound:
-      description: No session exists with this id.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-    TooManyRequests:
-      description: Password-reset requests are rate limited.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: UNAUTHENTICATED
+              message: Log in to continue.
