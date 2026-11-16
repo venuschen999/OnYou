@@ -1,214 +1,167 @@
 # OnYou
 
-OnYou is a web app that turns focus time into care for a virtual pet. Every account starts with a pet named Mochi. The user names a task, chooses 15, 25, or 50 minutes, and keeps at least one signed-in OnYou tab connected until the scheduled end. A completed session earns coins and feeding progress. Giving up, logging out during an Active session, or going 30 seconds or more without a heartbeat earns nothing.
+**Turn focus time into care for a virtual pet.** OnYou is a web app for students doing self-directed study or work. Name a task, pick 15, 25, or 50 minutes, and keep an OnYou tab open until the timer ends. Finishing earns coins and feeds your pet, Mochi. Giving up earns nothing, and Mochi gets a gentle slap.
 
-A focus session belongs to the account, not to a browser tab. Every signed-in tab shows the same task, countdown, and outcome. Any tab of that account can send heartbeats, give up, or request completion. Presence is an authenticated HTTP heartbeat every 10 seconds.
+**Live app:** <https://onyou123.vercel.app> · **API docs:** [docs/api.md](docs/api.md) and Swagger UI at [/docs](https://onyou123.vercel.app/docs) · **Setup and deployment:** [docs/setup-and-deployment.md](docs/setup-and-deployment.md)
 
-Product behavior is specified in [OnYou_PRD_v2_9.md](OnYou_PRD_v2_9.md). Layout, copy, and pet art are in [OnYou_web_mockups.html](OnYou_web_mockups.html).
+| Focus session | Session complete | Session ended early |
+| --- | --- | --- |
+| ![Focus screen with countdown](docs/screenshots/issue-13/focus-running-desktop.png) | ![Result screen with coins, feeding minutes, and an apple](docs/screenshots/issue-16/result-desktop.png) | ![Mochi slapped after giving up, with zero rewards](docs/screenshots/issue-17/session-ended-early.png) |
 
-## Project overview
+## Contents
 
-### What OnYou does
+- [How OnYou works](#how-onyou-works)
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Scripts](#scripts)
+- [Testing](#testing)
+- [Project structure](#project-structure)
+- [Documentation](#documentation)
+- [Team and workflow](#team-and-workflow)
 
-Students use OnYou for self-directed study or work. Completing a focus session feeds Mochi and adds coins. The pet’s day has three feeding states, shown on screen as Starving, Hungry, and Full. Coins accumulate and do not reset. Apples and feeding minutes reset at midnight in the timezone saved at signup.
+## How OnYou works
 
-### Core MVP features
+- **Every account gets a pet named Mochi**, who starts each day Starving.
+- **Focus sessions** last 15, 25, or 50 minutes. One session runs per account at a time, shown the same in every signed-in tab.
+- **Presence:** each open OnYou tab sends a heartbeat every 10 seconds. If no tab checks in for 30 seconds before the timer ends, the session ends with no rewards. Switching tabs or apps is fine.
+- **Rewards** (finished sessions only):
+  - **Coins:** 1 per minute. They keep adding up and never reset.
+  - **Apples:** every 25 minutes of finished focus in a day feeds Mochi one apple, up to 2 a day. 0 apples is Starving, 1 is Hungry, 2 is Full. Minutes past 50 a day don't count toward apples.
+- **Each day starts fresh** at midnight in the timezone saved at signup: apples and feeding minutes reset, coins stay, and a missed day never hurts Mochi.
+- **The server decides every outcome** from stored timestamps; the browser countdown is only a display. Rewards are applied exactly once.
 
-- Account signup, login, and logout.
-- Password reset by email.
-- A default pet named Mochi, with optional renaming.
-- Focus sessions of 15, 25, or 50 minutes, with one Active session per account.
-- Heartbeat presence across tabs. The server decides Completed or Abandoned from stored timestamps.
-- Coins and automatic feeding rewards, applied once.
-- Daily feeding progress.
-- Paginated session history.
+The full rules are in [OnYou_PRD_v2_9.md](OnYou_PRD_v2_9.md); screen layout and pet art are in [OnYou_web_mockups.html](OnYou_web_mockups.html).
 
-Spending coins, shops, pause and resume, custom durations, and social login are out of scope.
+## Features
 
-### Shipped on `main`
+Everything below is on `main` and deployed to production.
 
-`main` at `b08f70d` includes the behavior below. Screens are Home, Focus, History, and Settings, plus signup, login, forgot password, and reset password. Pull request #70 added integration tests for feeding-day credit. It did not change production behavior.
+| Area | What it does | Issues |
+| --- | --- | --- |
+| Accounts | Signup, login, and logout; a session lasts 7 days in an HttpOnly cookie. Login errors never reveal which field was wrong | #8, #9 |
+| Password reset | Forgot password emails a single-use link (Resend) that expires in 30 minutes; rate limited by email and IP; resetting signs out every device | #24, #25 |
+| Pet | Mochi is created with the account; rename in Settings (blank restores Mochi) | #10 |
+| Home | Pet card with Starving, Hungry, or Full art and label, apples today, progress to the next apple, coins, and the active-session bar | #19, #20 |
+| Focus | Task name, 15/25/50-minute picker showing what each duration earns today, countdown from the server end time, heartbeats across tabs, refresh restore, connection warning | #12, #13, #14, #72 |
+| Outcomes | Completion with exactly-once rewards and a result screen; Give up with confirmation and a slap; logout during a session ends it after confirmation | #15, #16, #17, #18 |
+| History | Every finished session, newest first, 20 per page with Load more and an empty state | #22, #23 |
+| Settings | Pet name, account email, and Log out | #10, #18 |
+| Accessibility | WCAG 2.2 AA contrast, keyboard focus, labelled inputs, dialogs that trap focus and close with Escape (bottom sheets on phones), reduced-motion support; tested at 390px and 1040px | #30 |
 
-- Signup, login, and logout. Logout asks for confirmation and then abandons an Active session.
-- Password reset by email through Resend, including the reset screen. Confirming a reset increments `tokenVersion` and signs out existing JWTs.
-- A default pet named Mochi, created with the account, and rename from Settings.
-- Focus sessions of 15, 25, or 50 minutes, one Active session per account, heartbeats, completion, the result screen, and Give up.
-- Coins and feeding rewards applied once on the server. Home shows Starving, Hungry, or Full from `GET /api/pet`.
-- Paginated session history with an empty state and Load more.
+Out of scope by design: spending coins, shops, pause and resume, custom durations, social login, and native apps.
 
-### Not finished
-
-- Feeding-day credit uses the session `endTime` in the timezone saved at signup. That rule was already in the domain and completion path. Issue #21 is closed. Pull request #70 (`06a26ca`) added `tests/integration/feedingDayCredit.test.ts` for midnight and late resolution. It did not add production functionality. The issue's acceptance checkboxes were still empty when it was closed.
-- Issue #30 is open. The accessibility and responsive pass across Home, Focus, History, and auth is not done. Earlier screens include labels and a modal focus trap. That does not close #30.
-
-Do not treat issue #30 as shipped.
-
-### Technology stack
-
-Versions and architecture rules are in [AGENTS.md](AGENTS.md). The versions installed in this repository are:
+## Tech stack
 
 | Area | Technology |
 | --- | --- |
-| Runtime | Node.js 22, TypeScript 5 |
-| App | Next.js 16 (App Router), React 19 |
-| Styling | Tailwind CSS 4 |
-| Data | PostgreSQL 16, Prisma 7 with `@prisma/adapter-pg` |
-| Auth and validation | `jose` (JWT in an HttpOnly cookie), `bcrypt`, Zod 4 |
-| Tests | Vitest 5 |
-| API docs | OpenAPI 3.1 and Swagger UI |
-| Hosting | Vercel for the app, Neon for PostgreSQL |
+| Language and runtime | TypeScript 5 (`strict`), Node.js 22 |
+| App | Next.js 16 App Router (Server Components by default), React 19, Tailwind CSS 4 |
+| Data | PostgreSQL 16 on Neon, Prisma 7 with `@prisma/adapter-pg` |
+| Auth and validation | `jose` (HS256 JWT in an HttpOnly cookie), `bcrypt`, Zod 4 shared by client and server |
+| Email | Resend (password reset only) |
+| Tests | Vitest 5, React Testing Library, Playwright |
+| Quality and hosting | ESLint, Prettier, GitHub Actions (CI, CodeQL, `npm audit`), Dependabot, Vercel |
+| API docs | OpenAPI 3.1 ([docs/openapi.yaml](docs/openapi.yaml)) with Swagger UI at `/docs` |
 
-## Prerequisites
+## Architecture
 
-- Node.js 22. [`.nvmrc`](.nvmrc) pins `22`, and `package.json` `engines` requires `>=22 <23`.
-- npm (included with Node.js).
-- PostgreSQL 16.
-- Git.
+```text
+Browser (Next.js UI) ──► src/lib/api (typed fetch helpers)
+                          ──► Route Handlers in src/app/api   (Zod-parse, authenticate, call one service)
+                               ──► Services in src/lib/server  (transactions, Prisma, Resend)
+                                    ──► Pure rules in src/lib/domain (rewards, presence, feeding day; no I/O, no clock)
+                                    ──► PostgreSQL (Neon)
+```
 
-## Local setup
+- Dependencies point one way only, down this chain. Business rules live in `src/lib/domain` and take the current time as an argument, so they are fully unit-tested.
+- Session status and rewards change in one conditional transaction, so retries and simultaneous tabs never pay twice.
+- Heartbeats are plain authenticated HTTP requests; there are no WebSockets.
 
-Commands below match this repository: `package-lock.json` is committed, `npm ci` is what CI runs, and `postinstall` runs `prisma generate`.
+Diagrams: [docs/diagrams/architecture.md](docs/diagrams/architecture.md) and [docs/diagrams/database-schema.md](docs/diagrams/database-schema.md). Engineering rules: [AGENTS.md](AGENTS.md).
 
-1. Clone the repository and enter it.
+## Quick start
 
-   ```bash
-   git clone https://github.com/venuschen999/OnYou.git
-   cd OnYou
-   ```
+You need Node.js 22 and PostgreSQL 16 (Docker works). The [setup and deployment guide](docs/setup-and-deployment.md#local-setup) has every step, including the Docker commands.
 
-2. Install dependencies.
+```bash
+git clone https://github.com/venuschen999/OnYou.git
+cd OnYou
+npm ci
+cp .env.example .env          # set DATABASE_URL and JWT_SECRET (openssl rand -base64 32)
+npx prisma migrate deploy
+npm run dev                   # http://localhost:3000
+```
 
-   ```bash
-   npm ci
-   ```
+Environment variables are explained in the [guide](docs/setup-and-deployment.md#environment-variables); [`.env.example`](.env.example) lists their names.
 
-3. Create a local env file from the name-only template.
+## Scripts
 
-   ```bash
-   cp .env.example .env
-   ```
-
-   Fill in the values in `.env`. Do not commit that file. Names and purposes are listed under [Environment variables](#environment-variables).
-
-4. Create three PostgreSQL 16 databases: one for the app, one for integration tests, and one shadow database for `prisma migrate dev`.
-
-   ```bash
-   createdb onyou
-   createdb onyou_test
-   createdb onyou_shadow
-   ```
-
-   Point the URLs in `.env` at those databases. A local PostgreSQL server that does not need a password can use:
-
-   ```text
-   DATABASE_URL=postgresql://localhost:5432/onyou
-   DATABASE_URL_UNPOOLED=
-   SHADOW_DATABASE_URL=postgresql://localhost:5432/onyou_shadow
-   TEST_DATABASE_URL=postgresql://localhost:5432/onyou_test
-   ```
-
-   If the server requires a role and password, put them in the URL (`postgresql://USER:PASSWORD@localhost:5432/onyou`) and use the same shape for the test and shadow URLs. Leave `DATABASE_URL_UNPOOLED` empty on a local server. That variable is the direct Neon host used by deployments. Local PostgreSQL is already a direct connection, so Prisma uses `DATABASE_URL`.
-
-   Set `JWT_SECRET` to a unique local value of at least 32 characters. The app rejects a shorter secret when it signs a token.
-
-5. Apply the committed migrations to the app database.
-
-   ```bash
-   npx prisma migrate deploy
-   ```
-
-   Prisma 7 reads the URL from `prisma.config.ts`, which uses `DATABASE_URL_UNPOOLED` when it is non-blank and otherwise `DATABASE_URL`. `migrate deploy` applies the SQL already committed in `prisma/migrations`.
-
-   Use `npx prisma migrate dev` only when you are creating a new migration. That command needs `SHADOW_DATABASE_URL`.
-
-6. Start the development server.
-
-   ```bash
-   npm run dev
-   ```
-
-   The app is served at [http://localhost:3000](http://localhost:3000). API documentation is at [http://localhost:3000/docs](http://localhost:3000/docs).
-
-`npm run test:integration` applies migrations to `TEST_DATABASE_URL` before the tests run.
-
-## Environment variables
-
-[`.env.example`](.env.example) lists every name and no values. Keep real values in `.env` locally and in Vercel environment settings for Preview and Production. Never commit secrets, passwords, reset tokens, or JWTs.
-
-| Name | Purpose |
+| Script | What it does |
 | --- | --- |
-| `DATABASE_URL` | Pooled connection for the running app (`src/lib/server/db.ts`). On a local PostgreSQL server this is the direct URL. |
-| `DATABASE_URL_UNPOOLED` | Direct Neon host for `prisma migrate deploy`. Leave unset locally when `DATABASE_URL` is already direct. |
-| `SHADOW_DATABASE_URL` | Shadow database for local `prisma migrate dev` drift checks. Not used by `migrate deploy` or by Vercel. |
-| `TEST_DATABASE_URL` | Isolated PostgreSQL 16 database for integration tests. Never a Neon URL. |
-| `JWT_SECRET` | Signs the auth cookie. At least 32 characters. Preview and Production use different values. |
+| `npm run dev` | Development server |
+| `npm run build` / `npm run start` | Production build and server (the build does not migrate) |
+| `npm run vercel-build` | What Vercel runs: `prisma migrate deploy && next build` |
+| `npm run lint` / `npm run typecheck` | ESLint / `next typegen && tsc --noEmit` |
+| `npm run format` / `npm run format:check` | Prettier |
+| `npm test` | Unit and component tests |
+| `npm run test:coverage` | Coverage gate (overall lines ≥ 80%, domain ≥ 95%) |
+| `npm run test:integration` | Integration tests against PostgreSQL (needs `TEST_DATABASE_URL`) |
+| `npm run test:e2e` | Playwright end-to-end tests |
 
-Preview and Production on Vercel receive `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, and `JWT_SECRET`. Leave `TEST_DATABASE_URL` and `SHADOW_DATABASE_URL` unset there. The Neon integration may add other `DATABASE_*` names. The app does not read them.
+## Testing
 
-## Development scripts
-
-Scripts from `package.json`:
-
-| Script | Command | What it does |
+| Level | Where | Covers |
 | --- | --- | --- |
-| `npm run dev` | `next dev` | Development server |
-| `npm run build` | `next build` | Production build of the app. Leaves the database unchanged |
-| `npm run start` | `next start` | Serves the production build |
-| `npm run vercel-build` | `prisma migrate deploy && next build` | Vercel build. Applies committed migrations, then builds |
-| `npm run lint` | `eslint` | Lint |
-| `npm run typecheck` | `next typegen && tsc --noEmit` | Typecheck |
-| `npm run format` | `prettier --write .` | Format files Prettier is allowed to change |
-| `npm run format:check` | `prettier --check .` | Check formatting |
-| `npm test` | `vitest run --config vitest.config.ts` | Unit tests |
-| `npm run test:integration` | requires `TEST_DATABASE_URL`, then Vitest | Integration tests against PostgreSQL 16 |
-| `npm run test:coverage` | `node scripts/run-coverage.mjs` | Coverage. Overall lines at least 80%. `src/lib/domain/` lines and branches at least 95% when that folder has runtime source |
-| `postinstall` | `prisma generate` | Generates the Prisma client after `npm ci` |
+| Unit | `tests/unit/domain`, `tests/unit/server`, `tests/unit/validation` | Rewards, presence, feeding day, reward hints, rate limits, tokens, schemas |
+| Component | `tests/unit/components`, `tests/unit/app` | Screens, dialogs, forms, contrast and route-state guards |
+| Integration | `tests/integration` | Every route handler against real PostgreSQL: auth, ownership, error shapes, transactions, concurrency, midnight and late resolution |
+| End-to-end | `e2e/` | Signup, the dashboard, complete, give up, a second tab, history, and layout at 390px and 1040px on every screen |
 
-`npm run test:integration` exits immediately when `TEST_DATABASE_URL` is missing. CI sets that variable to a PostgreSQL 16 service and also sets `DATABASE_URL` for the job. The test setup then points both `DATABASE_URL` and `DATABASE_URL_UNPOOLED` at `TEST_DATABASE_URL`, so a developer `.env` cannot send those tests to Neon.
+Features were built test-first (red, green, refactor), and each pull request records its runs. CI runs every level on every pull request.
 
-## Deployment
+## Project structure
 
-The app runs on Vercel. PostgreSQL runs on Neon. The GitHub repository is `venuschen999/OnYou`. The Vercel project is `onyou123`, connected to that repository. Do not create a second Vercel project. Detailed steps, the environment table, and the handoff checklist are in [docs/deployment.md](docs/deployment.md).
+```text
+src/
+  app/(auth)/        login, signup, forgot-password, reset-password
+  app/(app)/         dashboard (Home), focus, history, settings, each with loading and error states
+  app/api/           Route Handlers (HTTP only)
+  components/        feature UI; components/ui/ holds Button, Input, Modal, Spinner, ErrorMessage
+  hooks/             session controller, heartbeat, countdown, history list
+  lib/domain/        pure business rules
+  lib/server/        Prisma, auth, email, services
+  lib/validation/    Zod schemas shared by forms and handlers
+  lib/api/           typed browser fetch helpers
+prisma/              schema.prisma and committed migrations
+tests/               unit/, integration/, factories/, fixtures/
+e2e/                 Playwright specs
+docs/                API reference, setup guide, OpenAPI, diagrams, decisions, sprint records
+```
 
-### Preview and Production
-
-Production deployments come from `main`. Every other branch, including pull requests, gets a preview deployment.
-
-Preview and Production use separate Neon branches. The database was created from the Vercel project’s Storage tab with the custom prefix `DATABASE`, so Vercel sets `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) for each environment. Preview has “create a database branch for each deployment” enabled, so a preview never writes to production data. Production uses the Neon main branch. `JWT_SECRET` is set separately for Preview and Production.
-
-### Environment separation
-
-| | Local | Preview | Production |
-| --- | --- | --- | --- |
-| App database | Your PostgreSQL 16 database (`DATABASE_URL`) | Neon branch for that preview | Neon main branch |
-| Migrations | `npx prisma migrate deploy` against the local app database | `npm run vercel-build` during the preview build | `npm run vercel-build` during the production build |
-| Integration tests | `TEST_DATABASE_URL` only | unset | unset |
-| `JWT_SECRET` | local value in `.env` | unique Preview value | unique Production value |
-
-### Migration workflow
-
-Committed SQL in `prisma/migrations` is the schema. `prisma/schema.prisma` does not store a connection URL. Prisma 7 reads it from `prisma.config.ts`.
-
-Vercel runs `npm run vercel-build`, which is `prisma migrate deploy && next build`. `migrate deploy` applies pending committed migrations to the database for that deployment. It does not create migrations and it does not use the shadow database.
-
-`npm run build` stays `next build`, so a local production build does not migrate a database. Do not run `prisma migrate deploy` or `prisma migrate dev` against production Neon from a laptop. Production migrations run only as part of the Vercel build for `main`.
-
-Leave the Vercel build command at the framework default, or set it to `npm run vercel-build`. A dashboard override of `next build` skips migrations.
-
-## Project documentation
+## Documentation
 
 | Document | What it is |
 | --- | --- |
-| [AGENTS.md](AGENTS.md#3-architecture) | Engineering rules, architecture, and workflow. Folder layout and dependency direction are in that section. |
-| [docs/diagrams/architecture.md](docs/diagrams/architecture.md) | Request path from the Next.js UI through JWT auth, services, domain rules, Prisma, and Neon, plus Resend and Vercel |
-| [docs/diagrams/database-schema.md](docs/diagrams/database-schema.md) | Mermaid diagram and column list for the Prisma models |
-| [docs/sprints/sprint-1-retrospective.md](docs/sprints/sprint-1-retrospective.md) | Sprint 1 record written from GitHub. It is not a meeting transcript. |
-| [docs/sprints/sprint-2-retrospective.md](docs/sprints/sprint-2-retrospective.md) | Sprint 2 record written from GitHub. Issue #21 is closed. Issue #30 is still open. |
-| [docs/sprints/contribution-log.md](docs/sprints/contribution-log.md) | Commit, issue, and pull-request summary for CollinsCao and venuschen999. Both partners still need to confirm it. |
-| [docs/demo/demo-script.md](docs/demo/demo-script.md) | 10-minute demonstration plan. No recording is stored in this repository. |
+| [docs/api.md](docs/api.md) | API reference: authentication, errors, and every endpoint with examples |
+| [docs/setup-and-deployment.md](docs/setup-and-deployment.md) | Local setup, environment variables, tests, Vercel and Neon deployment, migrations, troubleshooting |
+| [docs/openapi.yaml](docs/openapi.yaml) | OpenAPI 3.1 specification (Swagger UI at `/docs`) |
+| [docs/diagrams/](docs/diagrams/) | Architecture and database schema diagrams |
+| [docs/agent-memory/](docs/agent-memory/README.md) | Product and technical decisions made during development, by feature |
+| [docs/sprints/](docs/sprints/) | Sprint retrospectives and the repository's contribution summary |
+| [docs/demo/demo-script.md](docs/demo/demo-script.md) | Demo walkthrough |
 | [OnYou_PRD_v2_9.md](OnYou_PRD_v2_9.md) | Product requirements |
 | [OnYou_web_mockups.html](OnYou_web_mockups.html) | Screen layout, copy, and pet art |
-| [docs/openapi.yaml](docs/openapi.yaml) | OpenAPI 3.1 specification. Swagger UI is served at `/docs` |
-| [docs/deployment.md](docs/deployment.md) | Vercel and Neon setup, environments, and migrations |
+| [AGENTS.md](AGENTS.md) | Engineering rules for people and coding agents |
 
-Older PRDs and rules live under `docs/archive/` and are not current instructions. Homework 3 reports are in [docs/hw3/](docs/hw3/), including [the Scrum setup report](docs/hw3/HW3_Scrum_Setup_Report.md), [the before/after results](docs/hw3/HW3_Before_After_Results.md), and [the rules refinement report](docs/hw3/HW3_Rules_Refinement_Report.md).
+Older PRDs and rules under `docs/archive/` are historical, not current instructions.
+
+## Team and workflow
+
+OnYou was built by **venuschen999** and **CollinsCao** over two sprints.
+
+- **Scrum board:** issues move Backlog → Sprint Todo → In Progress → In Review → Done on the GitHub project.
+- **Branches:** one issue per branch (`feature/12-start-session-api`), always into `main` through a pull request.
+- **Merging:** green CI, a working Vercel preview, and the other partner's approval; regular merges, no squash, so test-first history stays visible.
+- **AI assistance:** both partners used coding agents (Claude Code and Cursor) under [AGENTS.md](AGENTS.md); each pull request has an AI-usage note.
