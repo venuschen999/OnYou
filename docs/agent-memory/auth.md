@@ -62,7 +62,7 @@ Signup, login, JWT cookie, and timezone capture. PRD v2.9 US1, §7, §10 Securit
 
 Decided 2026-11-03 by Partner A (`venuschen999`) while planning #9. All are **Decided**.
 
-- **A8.1 No Forgot password link yet.** The login screen omits "Forgot password?" until #24/#25 build the page; #24 adds the link. *Why:* no dead links in Sprint 1.
+- **A8.1 No Forgot password link yet.** The login screen omits "Forgot password?" until the page exists. *Why:* no dead links in Sprint 1. *Superseded by A16 (2026-11-15): #24 became API-only, so #25 adds the link with the page.*
 - **A8.2 Placeholder app pages.** Home at `/dashboard` (`src/app/(app)/dashboard`), History at `/history`, Settings at `/settings`, each with only the app header, one `h1`, and loading/error states. `/` redirects to `/dashboard`. Features arrive in #20, #23, #10. *Why:* the redirect target and nav links must exist; no feature stubs.
 - **A8.3 Signed-in users skip auth screens.** A user with a valid session who opens `/login` or `/signup` is redirected to `/dashboard`.
 - **A8.4 Logout is not in #9.** No logout endpoint or button until #18. *Why:* stay in scope.
@@ -108,4 +108,28 @@ Decided 2026-11-03 by Partner A (`venuschen999`) while planning #9. All are **De
 - **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
 - **Why:** A forged `Host` header could make the server email a link to an attacker's site. #25 builds the `/reset-password` page.
 - **Applies to:** #24, #25.
+- **Status:** Decided.
+
+## A14. Invalid reset links share one error, checked on submit
+
+- **Decision:** `POST /api/auth/password-reset/confirm` returns `400` `RESET_LINK_INVALID` with message `This link no longer works.` for a used, expired, unknown, or missing token, without saying which. The token is checked when the new password is submitted; there is no separate link-check endpoint. `/reset-password` with no `token` shows the "This link no longer works" screen at once.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US2 needs a clear error and a way to request a new link, not the reason. AGENTS.md §9 lists only `request` and `confirm` for US2.
+- **Applies to:** #25.
+- **Status:** Decided.
+
+## A15. A successful reset signs out everywhere and returns to login
+
+- **Decision:** In one transaction the confirm handler stores the new bcrypt hash, increments `tokenVersion`, sets `usedAt` on the token, and deletes the user's other unused tokens. It does not change any `FocusSession`. The response clears this browser's auth cookie, and the screen goes to `/login?reset=done`, which shows `Password updated. Log in with your new password.`
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US2 and AGENTS.md §12 (tokenVersion signs out every session; the reset handler does not abandon an Active session). Mockup "Password updated" login state.
+- **Applies to:** #25.
+- **Status:** Decided.
+
+## A16. The Forgot password link arrives with its page
+
+- **Decision:** The login form shows `Forgot password?` linking to `/forgot-password`, added in #25 together with that page.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** Supersedes A8.1's "#24 adds the link": #24 became API-only, and a link before its page would be dead.
+- **Applies to:** #25 (`AuthForm`).
 - **Status:** Decided.

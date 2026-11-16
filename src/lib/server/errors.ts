@@ -1,6 +1,7 @@
 // AGENTS.md §9: each error code maps to exactly one HTTP status.
 const ERROR_STATUS = {
   VALIDATION_ERROR: 400,
+  RESET_LINK_INVALID: 400,
   INVALID_CREDENTIALS: 401,
   UNAUTHENTICATED: 401,
   FORBIDDEN: 403,

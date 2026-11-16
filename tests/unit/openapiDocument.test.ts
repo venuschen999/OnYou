@@ -140,6 +140,25 @@ describe("OpenAPI document", () => {
     );
   });
 
+  it("documents the password reset confirm as one transaction that signs out (#25)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/password-reset/confirm:");
+    const end = document.indexOf("\n  /api/", start + 10);
+    const confirm = document.slice(start, end);
+
+    expect(confirm).toContain("operationId: confirmPasswordReset");
+    expect(confirm).toContain("requestBody:");
+    expect(confirm).toContain("token");
+    expect(confirm).toContain("password");
+    expect(confirm).toContain("RESET_LINK_INVALID");
+    expect(confirm).toContain("This link no longer works.");
+    expect(confirm).toContain("tokenVersion");
+    expect(confirm).toContain(
+      "Password updated. Log in with your new password.",
+    );
+    expect(confirm).toContain("does not abandon");
+  });
+
   it("documents POST /api/sessions/{id}/abandon as Give up with a stored outcome (#17)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/{id}/abandon:");

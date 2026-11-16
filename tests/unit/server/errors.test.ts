@@ -14,6 +14,8 @@ const EXPECTED_STATUS = {
   EMAIL_IN_USE: 409,
   // AGENTS.md §9: rate limited (password reset, #24).
   TOO_MANY_REQUESTS: 429,
+  // A reset link that is used, expired, or unknown (#25, auth.md A14).
+  RESET_LINK_INVALID: 400,
   INTERNAL_ERROR: 500,
 } as const satisfies Record<ErrorCode, number>;
 
