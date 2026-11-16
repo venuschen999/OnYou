@@ -5,20 +5,21 @@ info:
   description: |
     OnYou turns focus time into care for a virtual pet (PRD v2.9).
     All bodies are JSON with camelCase fields; timestamps are ISO 8601 UTC.
-    Authentication is a JWT in the HttpOnly `onyou_auth` cookie.
-    A focus session belongs to the account: any authenticated tab of the
+    Authentication is a JWT in the HttpOnly `onyou_auth` cookie. The JWT
+    subject is the user id and the `tv` claim is tokenVersion. This document
+    contains no secrets.
+    A focus session belongs to the account. Any authenticated tab of the
     owner may heartbeat, give up, or request completion. Protected
-    operations require that authenticated account. Signup, login, starting
-    a session, heartbeats, and completion match the implemented API.
-    Resource field lists for the remaining paths are completed in a later
-    revision.
+    operations require that cookie. There is no focus-session token header.
+    Shipped operations match a registered route. Renaming the pet
+    (`PATCH /api/pet`) waits on issue #10 and is not a shipped contract.
 servers:
   - url: /
 tags:
   - name: Auth
     description: Account access and password reset.
   - name: Pet
-    description: The authenticated account's pet.
+    description: The authenticated account's pet. Rename waits on issue #10.
   - name: Sessions
     description: Account-owned focus sessions.
 paths:
@@ -26,6 +27,7 @@ paths:
     post:
       tags: [Auth]
       summary: Create an account and its default pet, Mochi
+      x-implementation: shipped
       description: |
         Creates the user and the pet in one transaction and signs the user in.
         The email is trimmed and lowercased. A missing or unknown `timezone`
@@ -68,6 +70,7 @@ paths:
     post:
       tags: [Auth]
       summary: Log in with email and password
+      x-implementation: shipped
       description: |
         Matches the email case-insensitively. A wrong email and a wrong
         password return the same 401 response.
@@ -108,6 +111,7 @@ paths:
       tags: [Auth]
       operationId: logout
       summary: Log out
+      x-implementation: shipped
       description: >
         Signs this browser out and ends the account's Active session on every
         device. The server locks and resolves the session first. Before the
@@ -139,11 +143,14 @@ paths:
                 message: Logged out.
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/auth/password-reset/request:
     post:
       tags: [Auth]
       operationId: requestPasswordReset
       summary: Request a password reset
+      x-implementation: shipped
       description: >
         The response is the same whether or not the email matches an account,
         including when the email could not be sent. For an existing account
@@ -152,6 +159,7 @@ paths:
         older unused tokens. The link expires after 30 minutes. Requests are
         limited to 3 per email and 10 per IP address in each 15-minute window,
         counted in PostgreSQL; unknown emails count toward the limit too.
+      security: []
       requestBody:
         required: true
         content:
@@ -179,11 +187,14 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/auth/password-reset/confirm:
     post:
       tags: [Auth]
       operationId: confirmPasswordReset
       summary: Set a new password
+      x-implementation: shipped
       description: >
         Sets a new password from an emailed reset link. In one transaction
         the server stores the new bcrypt hash, increments tokenVersion so
@@ -192,6 +203,7 @@ paths:
         this browser's auth cookie. A reset does not abandon an Active focus
         session by itself; signing out stops heartbeats. A used, expired,
         unknown, or missing token gets the same RESET_LINK_INVALID error.
+      security: []
       requestBody:
         required: true
         content:
@@ -237,11 +249,14 @@ paths:
                     error:
                       code: RESET_LINK_INVALID
                       message: This link no longer works.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/pet:
     get:
       tags: [Pet]
       operationId: getPet
       summary: Get the account pet and today's feeding progress
+      x-implementation: shipped
       description: >
         Returns the authenticated account's pet with its coin balance and
         today's feeding progress. Today is the current calendar date in the
@@ -259,22 +274,30 @@ paths:
                 $ref: "#/components/schemas/PetProgress"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
     patch:
       tags: [Pet]
       operationId: updatePet
       summary: Rename the account pet
+      x-implementation: planned
+      description: >
+        Not implemented. No route is registered (issue #10). Signup still
+        creates the default pet named Mochi. The rename request and response
+        are documented when issue #10 merges.
+      security:
+        - authCookie: []
       responses:
-        "200":
-          description: The updated pet.
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: >
+            Not implemented. The server has no pet rename route, so this
+            method is not found. Missing documentation depends on issue #10.
   /api/sessions:
     get:
       tags: [Sessions]
       operationId: listSessions
       summary: List focus history
+      x-implementation: shipped
       description: >
         Returns the authenticated account's Completed and Abandoned sessions,
         newest first, 20 per page. Active sessions are omitted. Each item's
@@ -298,10 +321,13 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
     post:
       tags: [Sessions]
       operationId: startSession
       summary: Start a focus session
+      x-implementation: shipped
       description: >
         Creates the account's single Active session. The server sets
         startTime, endTime, and lastHeartbeatAt. lastHeartbeatAt is the
@@ -327,7 +353,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/FocusSession"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: |
+            The body is not JSON, durationMinutes is not 15, 25, or 50,
+            or taskName is not text or is longer than 80 characters.
+            Over-limit input is rejected and is never truncated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                duration:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Check the highlighted fields and try again.
+                      fields:
+                        durationMinutes: Choose 15, 25, or 50 minutes.
+                taskName:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Check the highlighted fields and try again.
+                      fields:
+                        taskName: Task names can be up to 80 characters. This one has 81.
+                notJson:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Request body must be valid JSON.
         "401":
           $ref: "#/components/responses/Unauthorized"
         "409":
@@ -340,11 +393,14 @@ paths:
                 error:
                   code: ACTIVE_SESSION_EXISTS
                   message: One session at a time
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/active:
     get:
       tags: [Sessions]
       operationId: getActiveSession
       summary: Get the account's Active session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may read the same Active session.
         The server resolves presence before it responds. A session whose
@@ -366,11 +422,14 @@ paths:
                   - type: "null"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/heartbeat:
     post:
       tags: [Sessions]
       operationId: heartbeatSession
       summary: Record a heartbeat
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may send this request. The server
         resolves the session from stored timestamps before it renews
@@ -414,11 +473,14 @@ paths:
                 error:
                   code: SESSION_NOT_FOUND
                   message: No session exists with that id.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/complete:
     post:
       tags: [Sessions]
       operationId: completeSession
       summary: Complete a focus session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may request completion. The
         server clock is authoritative. Completion before the scheduled end
@@ -426,7 +488,15 @@ paths:
         and its presence deadline is strictly later than the scheduled end.
         Rewards are computed on the server from the session duration and the
         feeding day of endTime, then stored once in the same transaction that
-        sets status to COMPLETED. A retry returns the stored rewards and does
+        sets status to COMPLETED.
+        A Completed session earns its duration in coins.
+        Feeding minutes for that feeding day increase
+        by the duration and are capped at 50; minutes past the cap are
+        discarded. One apple is credited per 25 feeding minutes on that day,
+        at most 2. Leftover minutes stay on the same day. Coins keep accruing
+        after Full and are not cleared by the daily reset. The feeding day is
+        the session endTime in the user's saved IANA timezone, including when
+        resolution happens later. A retry returns the stored rewards and does
         not award them again. The response adds a pet snapshot for that feeding
         day: feedingState and minutesUntilNextApple. An Abandoned session stays
         Abandoned and cannot be revived. A request body is ignored, including
@@ -493,11 +563,14 @@ paths:
                     error:
                       code: SESSION_ABANDONED
                       message: This session was abandoned and cannot be completed.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/abandon:
     post:
       tags: [Sessions]
       operationId: abandonSession
       summary: Give up a focus session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may give up after the client shows
         the Give up confirmation. The server runs presence resolution first.
@@ -550,6 +623,8 @@ paths:
                 error:
                   code: SESSION_NOT_FOUND
                   message: No session exists with that id.
+        "500":
+          $ref: "#/components/responses/InternalError"
 components:
   securitySchemes:
     authCookie:
@@ -649,6 +724,7 @@ components:
         durationMinutes:
           type: integer
           enum: [15, 25, 50]
+          description: Choose 15, 25, or 50 minutes.
     FocusSession:
       type: object
       required:
@@ -667,7 +743,7 @@ components:
           type: string
         taskName:
           type: string
-          example: Essay draft: intro
+          example: "Essay draft: intro"
         durationMinutes:
           type: integer
           enum: [15, 25, 50]
@@ -797,7 +873,7 @@ components:
           type: string
         taskName:
           type: string
-          example: Essay draft: intro
+          example: "Essay draft: intro"
         date:
           type: string
           format: date-time
@@ -849,6 +925,10 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Something went wrong. Try again.
     BadRequest:
       description: The request failed validation.
       content:
@@ -861,6 +941,10 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: UNAUTHENTICATED
+              message: Log in to continue.
     Forbidden:
       description: The authenticated account does not own this session.
       content:
