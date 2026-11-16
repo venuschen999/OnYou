@@ -56,3 +56,11 @@ Default pet creation and naming. PRD v2.9 US3, §7; `AGENTS.md` §7.
 - **Why:** PRD v2.9 US3 puts the field on a new account's dashboard, which #20 builds; adding it to the placeholder Home here would conflict with #59. The PRD does not define "new account", so the rule above is a suggestion for #20.
 - **Applies to:** #10, #20.
 - **Status:** Decided (placement); rule open for Partner B in #20.
+
+## P8. Reward hints on the Focus setup duration picker
+
+- **Decision:** Each duration card shows `+N coins` and an apple hint calculated from today's progress with `calculateRewards` (`previewDurationRewards`): `+N apple(s)`, `N min toward an apple`, or `Full today`. Under the cards: `{Pet} needs 2 apples to be full today!` `Every 25 minutes of finished focus feeds one apple, and each minute earns a coin.`, or at 2 apples `{Pet} is full today!` `Focus still earns a coin per minute.` Until the pet loads, or if it cannot, the cards show coins only and the summary says `Your pet`. Coins are never described as spendable.
+- **Date / decided by:** 2026-11-16, Partner A (`venuschen999`), before user testing ("Option 2" on the design canvas).
+- **Why:** First-time users did not know what coins and apples are or how to earn them. The mockup and PRD v2.9 show no hint here, so this adds copy; the reward rules are unchanged (PRD v2.9 §6). Calculating each hint from today's progress keeps "+1 apple" and "+2 apples" true only when finishing really gives them.
+- **Applies to:** #72 (`durationPreview`, `DurationPicker`, `FocusSetup`).
+- **Status:** Decided.
