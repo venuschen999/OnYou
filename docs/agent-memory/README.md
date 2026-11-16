@@ -11,7 +11,7 @@ Product and technical decisions the team made while working with coding agents, 
 | [auth.md](auth.md) | Signup, login, JWT cookie, timezone capture, password reset | #8, #9, #24 |
 | [pet.md](pet.md) | Default pet (Mochi) creation and naming | #8, #10 |
 | [rewards.md](rewards.md) | Coins, feeding minutes, apples, feeding day | #11, #15, #19, #21 |
-| [sessions.md](sessions.md) | Start session, presence, completion, give up | #12, #14, #15, #17 |
+| [sessions.md](sessions.md) | Start session, presence, completion, give up | #12, #14, #15, #17, #18 |
 | [workflow.md](workflow.md) | Branching, PRs, repo process, and deployment | #3 |
 
 ## Entry format

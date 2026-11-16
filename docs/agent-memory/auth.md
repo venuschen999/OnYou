@@ -109,3 +109,11 @@ Decided 2026-11-03 by Partner A (`venuschen999`) while planning #9. All are **De
 - **Why:** A forged `Host` header could make the server email a link to an attacker's site. #25 builds the `/reset-password` page.
 - **Applies to:** #24, #25.
 - **Status:** Decided.
+
+## A17. Logout signs out this browser, from Settings
+
+- **Decision:** `POST /api/auth/logout` requires a signed-in caller (`401` otherwise), ends the Active session (sessions.md S12), clears this browser's auth cookie, and returns `200 { "message": "Logged out." }`. Other devices stay signed in; their session view ends on the next heartbeat. The Settings page gets an Account section with `Log out` and the hint `Logging out during a session ends that session.`; the pet name and email stay with #10. With a running session, `Log out` opens the confirmation: `Log out and end this session?` / `“{task}” is still running. Logging out ends it on every device, and Mochi gets nothing from it.` / `Log out and end session`, `Stay logged in`. Without one, it logs out at once. Either way the browser goes to `/login`.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US1 and §9 (Settings and Log out confirmation rows); mockup copy. Signing out every device is what password reset does (A15).
+- **Applies to:** #18, #10.
+- **Status:** Decided.
