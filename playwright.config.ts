@@ -1,8 +1,12 @@
+import { config } from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
 
 // Issue #6: Playwright smoke tests in e2e/. The app reads DATABASE_URL and
 // JWT_SECRET from the environment: .env locally, a throwaway Postgres service
 // in CI. Never point these tests at Neon.
+// Load .env into the test workers too: helpers that move stored timestamps
+// (#26) run in Node, not in Next.js, so they do not see Next's env file.
+config({ quiet: true });
 const PORT = 3000;
 const BASE_URL = `http://localhost:${PORT}`;
 const SERVER_START_TIMEOUT_MS = 180_000;
