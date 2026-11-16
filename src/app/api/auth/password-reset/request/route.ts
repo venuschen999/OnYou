@@ -23,12 +23,12 @@ export async function POST(request: Request): Promise<Response> {
       passwordResetRequestSchema,
       await readJsonBody(request),
     );
-    await requestPasswordReset(input, clientIp(request), new Date(), {
-      RESEND_API_KEY: process.env.RESEND_API_KEY,
-      RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
-      APP_URL: process.env.APP_URL,
-      VERCEL_URL: process.env.VERCEL_URL,
-    });
+    await requestPasswordReset(
+      input,
+      clientIp(request),
+      new Date(),
+      process.env,
+    );
     return NextResponse.json({ message: ACCEPTED_MESSAGE });
   } catch (error) {
     return toErrorResponse(error);
