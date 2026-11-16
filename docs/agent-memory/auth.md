@@ -77,3 +77,35 @@ Decided 2026-11-03 by Partner A (`venuschen999`) while planning #9. All are **De
 - **Loop guard:** The proxy does **not** redirect signed-in users away from `/login`; the login and signup pages do that with the full check (A8.3). Otherwise a stale-version token would bounce between `/login` and `/dashboard`.
 - **Date / decided by:** 2026-11-03, implementation choice within A7/A8 (Claude Code), reviewed by Partner A.
 - **Status:** Decided.
+
+## A10. Password-reset rate limits
+
+- **Decision:** `POST /api/auth/password-reset/request` allows 3 requests per email and 10 per IP address in each fixed 15-minute window. Counters live in the PostgreSQL table `RateLimitCounter`, keyed by a SHA-256 hash of the lowercased email or by the IP from the first `x-forwarded-for` entry (`unknown` when absent). The email limit applies whether or not an account exists. Over a limit returns `429` `TOO_MANY_REQUESTS` with the mockup copy `Too many reset requests. Wait a few minutes, then try again.`
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US2 and §10 require per-email and per-IP limits in PostgreSQL but give no numbers. Counting unknown emails too keeps the limit from revealing which accounts exist. Hashing the email keeps addresses out of the counter table.
+- **Applies to:** #24.
+- **Status:** Decided.
+
+## A11. Reset request response is identical for every email
+
+- **Decision:** Every accepted request returns `200` with `{ "message": "If an account exists for that email, a reset link is on its way." }`, including unknown emails and a failed Resend call (the failure is logged without the token or link). An invalid email is `400` `VALIDATION_ERROR`.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US2 and AGENTS.md §12: unknown emails get the same response. A different status on a send failure would reveal that the account exists.
+- **Applies to:** #24, #25 (Check your email screen).
+- **Status:** Decided.
+
+## A12. Reset tokens and the reset email
+
+- **Decision:** A token is 32 bytes from `crypto.randomBytes`, sent as 64 hex characters. `PasswordResetToken` stores only its SHA-256 hash, `expiresAt` 30 minutes after creation, and `usedAt`. A new request deletes the user's other unused tokens. The email goes only through Resend (`fetch` to its API, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`). Subject: `Reset your OnYou password`. Text: `Someone asked to reset the password for your OnYou account. Open this link to choose a new password: {link} The link works once and expires in 30 minutes. If you didn't ask for this, ignore this email; your password stays the same.`
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** AGENTS.md §12 (random, hashed, single-use, 30 minutes, newer request invalidates older). The token has 256 bits of entropy, so a fast hash is enough; #25 compares hashes in constant time. AGENTS.md §11 prefers `fetch` over a new SDK.
+- **Applies to:** #24, #25 (confirm).
+- **Status:** Decided.
+
+## A13. Reset links use a configured base URL
+
+- **Decision:** The link is `{base}/reset-password?token={token}`. The base is `APP_URL` without a trailing slash, or `https://{VERCEL_URL}` on Vercel previews. The request `Host` header is never used.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** A forged `Host` header could make the server email a link to an attacker's site. #25 builds the `/reset-password` page.
+- **Applies to:** #24, #25.
+- **Status:** Decided.

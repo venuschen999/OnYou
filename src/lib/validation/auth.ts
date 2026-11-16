@@ -67,5 +67,13 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+// US2: only the email; the response is the same for every address.
+export const passwordResetRequestSchema = z.object({
+  email: emailSchema,
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type PasswordResetRequestInput = z.infer<
+  typeof passwordResetRequestSchema
+>;

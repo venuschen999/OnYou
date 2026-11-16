@@ -122,10 +122,36 @@ paths:
       operationId: requestPasswordReset
       summary: Request a password reset
       description: >
-        The response is the same whether or not the email matches an account.
+        The response is the same whether or not the email matches an account,
+        including when the email could not be sent. For an existing account
+        the server stores only a SHA-256 hash of a random token, emails a
+        single-use reset link through Resend, and deletes the account's
+        older unused tokens. The link expires after 30 minutes. Requests are
+        limited to 3 per email and 10 per IP address in each 15-minute window,
+        counted in PostgreSQL; unknown emails count toward the limit too.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  $ref: "#/components/schemas/Email"
       responses:
         "200":
           description: The reset request was accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: If an account exists for that email, a reset link is on its way.
         "400":
           $ref: "#/components/responses/BadRequest"
         "429":
@@ -624,6 +650,7 @@ components:
                 - ACTIVE_SESSION_EXISTS
                 - SESSION_TOO_EARLY
                 - SESSION_ABANDONED
+                - TOO_MANY_REQUESTS
                 - INTERNAL_ERROR
             message:
               type: string
@@ -700,3 +727,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: TOO_MANY_REQUESTS
+              message: Too many reset requests. Wait a few minutes, then try again.
