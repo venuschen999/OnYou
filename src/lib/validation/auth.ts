@@ -67,5 +67,23 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+// US2: only the email; the response is the same for every address.
+export const passwordResetRequestSchema = z.object({
+  email: emailSchema,
+});
+
+// US2 confirm. A missing token is a bad link, not a form error (auth.md A14),
+// so the service decides; only the password is a field.
+export const passwordResetConfirmSchema = z.object({
+  token: z.string().optional(),
+  password: passwordSchema,
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type PasswordResetRequestInput = z.infer<
+  typeof passwordResetRequestSchema
+>;
+export type PasswordResetConfirmInput = z.infer<
+  typeof passwordResetConfirmSchema
+>;

@@ -1,9 +1,16 @@
+import type { HistorySessionFields } from "@/lib/domain/historyDisplay";
+
 export type SessionPetView = {
   name: string;
   feedingState: "STARVING" | "HUNGRY" | "FULL";
   apples: number;
   feedingMinutes: number;
   minutesUntilNextApple: number;
+};
+
+export type HistoryPageView = {
+  items: HistorySessionFields[];
+  nextCursor: string | null;
 };
 
 export type FocusSessionView = {
@@ -88,6 +95,13 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+export function listSessionHistory(cursor?: string): Promise<HistoryPageView> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  const query = params.size > 0 ? `?${params.toString()}` : "";
+  return requestJson<HistoryPageView>(`/api/sessions${query}`);
+}
+
 export function getActiveSession(): Promise<FocusSessionView | null> {
   return requestJson<FocusSessionView | null>("/api/sessions/active");
 }
@@ -111,6 +125,13 @@ export function heartbeatSession(sessionId: string): Promise<FocusSessionView> {
 
 export function completeSession(sessionId: string): Promise<FocusSessionView> {
   return requestJson<FocusSessionView>(`/api/sessions/${sessionId}/complete`, {
+    method: "POST",
+  });
+}
+
+// US7: Give up. The server may complete instead after the scheduled end.
+export function abandonSession(sessionId: string): Promise<FocusSessionView> {
+  return requestJson<FocusSessionView>(`/api/sessions/${sessionId}/abandon`, {
     method: "POST",
   });
 }
