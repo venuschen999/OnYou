@@ -160,6 +160,21 @@ describe("OpenAPI document", () => {
     expect(abandon).not.toContain("sessionStorage");
   });
 
+  it("documents logout as ending the Active session and clearing the cookie (#18)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/logout:");
+    const end = document.indexOf("\n  /api/", start + 10);
+    const logoutRoute = document.slice(start, end);
+
+    expect(logoutRoute).toContain("operationId: logout");
+    expect(logoutRoute).toContain("authCookie");
+    expect(logoutRoute).toContain("Logged out.");
+    expect(logoutRoute).toContain("Max-Age=0");
+    expect(logoutRoute).toContain("abandons");
+    expect(logoutRoute).toContain("presence deadline");
+    expect(logoutRoute).not.toContain("sessionStorage");
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
