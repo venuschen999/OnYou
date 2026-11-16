@@ -29,3 +29,14 @@ export async function getPetProgress(
     apples: feeding?.apples ?? 0,
   });
 }
+
+// pet.md P5: the name arrives already trimmed and defaulted by
+// renamePetSchema; the response is the same snapshot GET returns.
+export async function renamePet(
+  userId: string,
+  name: string,
+  now: Date,
+): Promise<PetProgress> {
+  await prisma.pet.update({ where: { userId }, data: { name } });
+  return getPetProgress(userId, now);
+}

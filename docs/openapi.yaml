@@ -263,11 +263,45 @@ paths:
       tags: [Pet]
       operationId: updatePet
       summary: Rename the account pet
+      description: >
+        Renames the authenticated account's pet. The name is trimmed; a blank
+        name restores the default, Mochi. A name over 30 characters (counted
+        as characters) is rejected, never truncated. The response is the same
+        pet progress that GET returns.
+      security:
+        - authCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 30
+                  description: Trimmed; blank restores Mochi.
+                  example: Biscuit
       responses:
         "200":
-          description: The updated pet.
+          description: The renamed pet and today's feeding progress.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetProgress"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: The name is over 30 characters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: Check the highlighted fields and try again.
+                  fields:
+                    name: Pet names can be up to 30 characters. This one has 35.
         "401":
           $ref: "#/components/responses/Unauthorized"
   /api/sessions:
