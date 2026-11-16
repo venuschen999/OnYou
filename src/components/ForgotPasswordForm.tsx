@@ -12,13 +12,11 @@ import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
+import { TEXT_LINK_CLASS } from "@/components/ui/linkStyles";
 import { ApiError, requestPasswordReset } from "@/lib/api/auth";
 import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { passwordResetRequestSchema } from "@/lib/validation/auth";
-
-const LINK_CLASS =
-  "text-[0.92rem] font-semibold text-primary no-underline hover:underline";
 
 // The server's 429 copy is the mockup's; other failures use the shared copy.
 function requestErrorMessage(error: unknown): string {
@@ -74,7 +72,7 @@ export function ForgotPasswordForm(): ReactElement {
           If an account exists for {sentTo}, a reset link is on its way. The
           link works once and expires in 30 minutes.
         </p>
-        <Link href={ROUTES.login} className={LINK_CLASS}>
+        <Link href={ROUTES.login} className={TEXT_LINK_CLASS}>
           Back to log in
         </Link>
         <Button
@@ -126,7 +124,7 @@ export function ForgotPasswordForm(): ReactElement {
           "Send reset link"
         )}
       </Button>
-      <Link href={ROUTES.login} className={LINK_CLASS}>
+      <Link href={ROUTES.login} className={TEXT_LINK_CLASS}>
         Back to log in
       </Link>
     </form>

@@ -7,6 +7,7 @@ import { Button } from "./ui/Button";
 import { ErrorMessage } from "./ui/ErrorMessage";
 import { Input } from "./ui/Input";
 import { Spinner } from "./ui/Spinner";
+import { TEXT_LINK_CLASS } from "./ui/linkStyles";
 import { ROUTES } from "@/lib/routes";
 
 type AuthFormProps = { mode: AuthMode };
@@ -33,15 +34,11 @@ const COPY = {
 
 const PASSWORD_HINT = "8 to 15 characters";
 
-function linkClass(): string {
-  return "text-[0.92rem] font-semibold text-primary no-underline hover:underline";
-}
-
 function EmailInUseMessage({ message }: { message: string }): ReactNode {
   return (
     <>
       {message}{" "}
-      <Link href={ROUTES.login} className={linkClass()}>
+      <Link href={ROUTES.login} className={TEXT_LINK_CLASS}>
         Log in
       </Link>{" "}
       instead.
@@ -101,7 +98,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement {
         // auth.md A16: the link arrives with its page.
         <Link
           href={ROUTES.forgotPassword}
-          className={`${linkClass()} self-start`}
+          className={`${TEXT_LINK_CLASS} self-start`}
         >
           Forgot password?
         </Link>
@@ -122,7 +119,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement {
       </Button>
       <p className="m-0 mt-1 text-[0.92rem] text-muted">
         {copy.footPrompt}{" "}
-        <Link href={copy.footHref} className={linkClass()}>
+        <Link href={copy.footHref} className={TEXT_LINK_CLASS}>
           {copy.footLink}
         </Link>
       </p>

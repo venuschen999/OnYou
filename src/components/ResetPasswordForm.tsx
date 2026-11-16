@@ -13,13 +13,12 @@ import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
+import { TEXT_LINK_CLASS } from "@/components/ui/linkStyles";
 import { ApiError, confirmPasswordReset } from "@/lib/api/auth";
 import { SERVER_ERROR_MESSAGE } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { passwordSchema } from "@/lib/validation/auth";
 
-const LINK_CLASS =
-  "text-[0.92rem] font-semibold text-primary no-underline hover:underline";
 const PRIMARY_LINK =
   "block w-full rounded-[14px] bg-primary px-[22px] py-[13px] text-center font-bold text-primary-foreground no-underline";
 const PASSWORD_HINT =
@@ -37,7 +36,7 @@ function LinkNoLongerWorks(): ReactElement {
       <Link href={ROUTES.forgotPassword} className={PRIMARY_LINK}>
         Send a new link
       </Link>
-      <Link href={ROUTES.login} className={LINK_CLASS}>
+      <Link href={ROUTES.login} className={TEXT_LINK_CLASS}>
         Back to log in
       </Link>
     </div>
