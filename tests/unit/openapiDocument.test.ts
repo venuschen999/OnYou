@@ -146,6 +146,28 @@ describe("OpenAPI document", () => {
     expect(document).toContain("default: 20");
   });
 
+  it("documents the password reset request as uniform and rate limited (#24)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/password-reset/request:");
+    const end = document.indexOf("  /api/auth/password-reset/confirm:");
+    const resetRequest = document.slice(start, end);
+    const tooMany = document.slice(document.indexOf("    TooManyRequests:"));
+
+    expect(resetRequest).toContain("operationId: requestPasswordReset");
+    expect(resetRequest).toContain("requestBody:");
+    expect(resetRequest).toContain("email");
+    expect(resetRequest).toContain(
+      "If an account exists for that email, a reset link is on its way.",
+    );
+    expect(resetRequest).toContain("30 minutes");
+    expect(resetRequest).toContain("Resend");
+    expect(resetRequest).toContain('"429"');
+    expect(tooMany).toContain("TOO_MANY_REQUESTS");
+    expect(tooMany).toContain(
+      "Too many reset requests. Wait a few minutes, then try again.",
+    );
+  });
+
   it("documents POST /api/sessions/{id}/abandon as Give up with a stored outcome (#17)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/{id}/abandon:");
