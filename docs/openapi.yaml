@@ -5,13 +5,14 @@ info:
   description: |
     OnYou turns focus time into care for a virtual pet (PRD v2.9).
     All bodies are JSON with camelCase fields; timestamps are ISO 8601 UTC.
-    Authentication is a JWT in the HttpOnly `onyou_auth` cookie.
-    A focus session belongs to the account: any authenticated tab of the
+    Authentication is a JWT in the HttpOnly `onyou_auth` cookie. The JWT
+    subject is the user id and the `tv` claim is tokenVersion. This document
+    contains no secrets.
+    A focus session belongs to the account. Any authenticated tab of the
     owner may heartbeat, give up, or request completion. Protected
-    operations require that authenticated account. Signup, login, starting
-    a session, heartbeats, and completion match the implemented API.
-    Resource field lists for the remaining paths are completed in a later
-    revision.
+    operations require that cookie. There is no focus-session token header.
+    Shipped operations match a registered route. There is no unfinished
+    MVP path in this document.
 servers:
   - url: /
 tags:
@@ -26,6 +27,7 @@ paths:
     post:
       tags: [Auth]
       summary: Create an account and its default pet, Mochi
+      x-implementation: shipped
       description: |
         Creates the user and the pet in one transaction and signs the user in.
         The email is trimmed and lowercased. A missing or unknown `timezone`
@@ -68,6 +70,7 @@ paths:
     post:
       tags: [Auth]
       summary: Log in with email and password
+      x-implementation: shipped
       description: |
         Matches the email case-insensitively. A wrong email and a wrong
         password return the same 401 response.
@@ -108,70 +111,234 @@ paths:
       tags: [Auth]
       operationId: logout
       summary: Log out
+      x-implementation: shipped
       description: >
-        Signing out stops heartbeats. Logging out during an Active session
-        abandons that session on every device.
+        Signs this browser out and ends the account's Active session on every
+        device. The server locks and resolves the session first. Before the
+        scheduled end, logout abandons it with zero coins, feeding minutes,
+        and apples; rewards already earned are unchanged. At or after the
+        scheduled end, a session with a presence deadline strictly later than
+        the scheduled end is completed with its exactly-once rewards instead.
+        Other devices stay signed in, and their next heartbeat returns the
+        ended session. No focus-session token is read or cleared.
+      security:
+        - authCookie: []
       responses:
         "200":
-          description: The account is logged out.
+          description: Logged out.
+          headers:
+            Set-Cookie:
+              description: Clears the auth cookie (Max-Age=0).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Logged out.
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/auth/password-reset/request:
     post:
       tags: [Auth]
       operationId: requestPasswordReset
       summary: Request a password reset
+      x-implementation: shipped
       description: >
-        The response is the same whether or not the email matches an account.
+        The response is the same whether or not the email matches an account,
+        including when the email could not be sent. For an existing account
+        the server stores only a SHA-256 hash of a random token, emails a
+        single-use reset link through Resend, and deletes the account's
+        older unused tokens. The link expires after 30 minutes. Requests are
+        limited to 3 per email and 10 per IP address in each 15-minute window,
+        counted in PostgreSQL; unknown emails count toward the limit too.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  $ref: "#/components/schemas/Email"
       responses:
         "200":
           description: The reset request was accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: If an account exists for that email, a reset link is on its way.
         "400":
           $ref: "#/components/responses/BadRequest"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/auth/password-reset/confirm:
     post:
       tags: [Auth]
       operationId: confirmPasswordReset
       summary: Set a new password
+      x-implementation: shipped
       description: >
-        A successful reset signs the account out everywhere. It does not
-        abandon an Active focus session by itself.
+        Sets a new password from an emailed reset link. In one transaction
+        the server stores the new bcrypt hash, increments tokenVersion so
+        every existing session is signed out, marks the link used, and
+        deletes the account's other unused links. The response also clears
+        this browser's auth cookie. A reset does not abandon an Active focus
+        session by itself; signing out stops heartbeats. A used, expired,
+        unknown, or missing token gets the same RESET_LINK_INVALID error.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                token:
+                  type: string
+                  description: The token from the reset link.
+                password:
+                  $ref: "#/components/schemas/Password"
       responses:
         "200":
           description: The password was updated.
+          headers:
+            Set-Cookie:
+              description: Clears the auth cookie (Max-Age=0).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Password updated. Log in with your new password.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: >
+            The password breaks the 8 to 15 character rule (VALIDATION_ERROR),
+            or the link is used, expired, or unknown (RESET_LINK_INVALID).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidLink:
+                  value:
+                    error:
+                      code: RESET_LINK_INVALID
+                      message: This link no longer works.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/pet:
     get:
       tags: [Pet]
       operationId: getPet
-      summary: Get the account pet
+      summary: Get the account pet and today's feeding progress
+      x-implementation: shipped
+      description: >
+        Returns the authenticated account's pet with its coin balance and
+        today's feeding progress. Today is the current calendar date in the
+        timezone saved at signup. Apples and feeding minutes reset at midnight
+        in that timezone; coins never reset. The read has no side effects: it
+        does not resolve or complete a running session.
+      security:
+        - authCookie: []
       responses:
         "200":
           description: The authenticated account's pet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetProgress"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
     patch:
       tags: [Pet]
       operationId: updatePet
       summary: Rename the account pet
+      x-implementation: shipped
+      description: >
+        Renames the authenticated account's pet. The name is trimmed; a blank
+        name restores the default, Mochi. A name over 30 characters (counted
+        as characters) is rejected, never truncated. The response is the same
+        pet progress that GET returns.
+      security:
+        - authCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 30
+                  description: Trimmed; blank restores Mochi.
+                  example: Biscuit
       responses:
         "200":
-          description: The updated pet.
+          description: The renamed pet and today's feeding progress.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetProgress"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: The name is over 30 characters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: Check the highlighted fields and try again.
+                  fields:
+                    name: Pet names can be up to 30 characters. This one has 35.
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions:
     get:
       tags: [Sessions]
       operationId: listSessions
       summary: List focus history
+      x-implementation: shipped
       description: >
         Returns the authenticated account's Completed and Abandoned sessions,
-        newest first, 20 per page.
+        newest first, 20 per page. Active sessions are omitted. Each item's
+        date is that session's startTime in UTC. When start times are equal,
+        the greater session id comes first. An Abandoned session reports zero
+        coins and zero feeding minutes. The cursor is the id of a final
+        session belonging to this account.
+      security:
+        - authCookie: []
       parameters:
         - $ref: "#/components/parameters/HistoryCursor"
         - $ref: "#/components/parameters/HistoryLimit"
@@ -186,10 +353,13 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
     post:
       tags: [Sessions]
       operationId: startSession
       summary: Start a focus session
+      x-implementation: shipped
       description: >
         Creates the account's single Active session. The server sets
         startTime, endTime, and lastHeartbeatAt. lastHeartbeatAt is the
@@ -215,7 +385,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/FocusSession"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: |
+            The body is not JSON, durationMinutes is not 15, 25, or 50,
+            or taskName is not text or is longer than 80 characters.
+            Over-limit input is rejected and is never truncated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                duration:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Check the highlighted fields and try again.
+                      fields:
+                        durationMinutes: Choose 15, 25, or 50 minutes.
+                taskName:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Check the highlighted fields and try again.
+                      fields:
+                        taskName: Task names can be up to 80 characters. This one has 81.
+                notJson:
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Request body must be valid JSON.
         "401":
           $ref: "#/components/responses/Unauthorized"
         "409":
@@ -228,11 +425,14 @@ paths:
                 error:
                   code: ACTIVE_SESSION_EXISTS
                   message: One session at a time
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/active:
     get:
       tags: [Sessions]
       operationId: getActiveSession
       summary: Get the account's Active session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may read the same Active session.
         The server resolves presence before it responds. A session whose
@@ -254,11 +454,14 @@ paths:
                   - type: "null"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/heartbeat:
     post:
       tags: [Sessions]
       operationId: heartbeatSession
       summary: Record a heartbeat
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may send this request. The server
         resolves the session from stored timestamps before it renews
@@ -302,11 +505,14 @@ paths:
                 error:
                   code: SESSION_NOT_FOUND
                   message: No session exists with that id.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/complete:
     post:
       tags: [Sessions]
       operationId: completeSession
       summary: Complete a focus session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may request completion. The
         server clock is authoritative. Completion before the scheduled end
@@ -314,7 +520,15 @@ paths:
         and its presence deadline is strictly later than the scheduled end.
         Rewards are computed on the server from the session duration and the
         feeding day of endTime, then stored once in the same transaction that
-        sets status to COMPLETED. A retry returns the stored rewards and does
+        sets status to COMPLETED.
+        A Completed session earns its duration in coins.
+        Feeding minutes for that feeding day increase
+        by the duration and are capped at 50; minutes past the cap are
+        discarded. One apple is credited per 25 feeding minutes on that day,
+        at most 2. Leftover minutes stay on the same day. Coins keep accruing
+        after Full and are not cleared by the daily reset. The feeding day is
+        the session endTime in the user's saved IANA timezone, including when
+        resolution happens later. A retry returns the stored rewards and does
         not award them again. The response adds a pet snapshot for that feeding
         day: feedingState and minutesUntilNextApple. An Abandoned session stays
         Abandoned and cannot be revived. A request body is ignored, including
@@ -381,11 +595,14 @@ paths:
                     error:
                       code: SESSION_ABANDONED
                       message: This session was abandoned and cannot be completed.
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions/{id}/abandon:
     post:
       tags: [Sessions]
       operationId: abandonSession
       summary: Give up a focus session
+      x-implementation: shipped
       description: >
         Any authenticated tab of the owner may give up after the client shows
         the Give up confirmation. The server runs presence resolution first.
@@ -438,6 +655,8 @@ paths:
                 error:
                   code: SESSION_NOT_FOUND
                   message: No session exists with that id.
+        "500":
+          $ref: "#/components/responses/InternalError"
 components:
   securitySchemes:
     authCookie:
@@ -473,6 +692,7 @@ components:
       description: Page size. History pages contain 20 sessions.
       schema:
         type: integer
+        enum: [20]
         default: 20
   schemas:
     Email:
@@ -536,6 +756,7 @@ components:
         durationMinutes:
           type: integer
           enum: [15, 25, 50]
+          description: Choose 15, 25, or 50 minutes.
     FocusSession:
       type: object
       required:
@@ -554,7 +775,7 @@ components:
           type: string
         taskName:
           type: string
-          example: Essay draft: intro
+          example: "Essay draft: intro"
         durationMinutes:
           type: integer
           enum: [15, 25, 50]
@@ -604,6 +825,40 @@ components:
           type: integer
           minimum: 0
           maximum: 25
+    PetProgress:
+      type: object
+      description: The pet and today's feeding progress (US4).
+      required:
+        - name
+        - coins
+        - applesToday
+        - feedingMinutesTowardNextApple
+        - feedingState
+      properties:
+        name:
+          type: string
+          example: Mochi
+        coins:
+          type: integer
+          minimum: 0
+          description: Total coins earned. Never resets.
+          example: 385
+        applesToday:
+          type: integer
+          minimum: 0
+          maximum: 2
+          example: 1
+        feedingMinutesTowardNextApple:
+          type: integer
+          minimum: 0
+          maximum: 24
+          description: Leftover feeding minutes today toward the next apple; 0 when Full.
+          example: 10
+        feedingState:
+          type: string
+          enum: [STARVING, HUNGRY, FULL]
+          description: 0 apples is STARVING, 1 is HUNGRY, 2 is FULL.
+          example: HUNGRY
     ErrorResponse:
       type: object
       required: [error]
@@ -616,6 +871,7 @@ components:
               type: string
               enum:
                 - VALIDATION_ERROR
+                - RESET_LINK_INVALID
                 - EMAIL_IN_USE
                 - INVALID_CREDENTIALS
                 - UNAUTHENTICATED
@@ -624,6 +880,7 @@ components:
                 - ACTIVE_SESSION_EXISTS
                 - SESSION_TOO_EARLY
                 - SESSION_ABANDONED
+                - TOO_MANY_REQUESTS
                 - INTERNAL_ERROR
             message:
               type: string
@@ -632,6 +889,39 @@ components:
               description: Per-field messages for form display, keyed by field name.
               additionalProperties:
                 type: string
+    HistorySession:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - taskName
+        - date
+        - durationMinutes
+        - outcome
+        - coinsEarned
+        - feedingMinutesEarned
+      properties:
+        id:
+          type: string
+        taskName:
+          type: string
+          example: "Essay draft: intro"
+        date:
+          type: string
+          format: date-time
+          description: Session startTime in UTC. Pages are ordered by this instant.
+        durationMinutes:
+          type: integer
+          enum: [15, 25, 50]
+        outcome:
+          type: string
+          enum: [COMPLETED, ABANDONED]
+        coinsEarned:
+          type: integer
+          minimum: 0
+        feedingMinutesEarned:
+          type: integer
+          minimum: 0
     SessionHistoryPage:
       type: object
       additionalProperties: false
@@ -640,12 +930,9 @@ components:
         items:
           type: array
           description: >
-            Focus sessions for the authenticated account, newest first.
-            The fields of each session are specified in a later revision.
+            Completed and Abandoned sessions for this account, newest first.
           items:
-            type: object
-            additionalProperties: true
-            description: One history entry. Field list deferred.
+            $ref: "#/components/schemas/HistorySession"
         nextCursor:
           type: [string, "null"]
           description: >
@@ -670,6 +957,10 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Something went wrong. Try again.
     BadRequest:
       description: The request failed validation.
       content:
@@ -682,6 +973,10 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: UNAUTHENTICATED
+              message: Log in to continue.
     Forbidden:
       description: The authenticated account does not own this session.
       content:
@@ -700,3 +995,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: TOO_MANY_REQUESTS
+              message: Too many reset requests. Wait a few minutes, then try again.

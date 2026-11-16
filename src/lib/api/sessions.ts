@@ -1,9 +1,16 @@
+import type { HistorySessionFields } from "@/lib/domain/historyDisplay";
+
 export type SessionPetView = {
   name: string;
   feedingState: "STARVING" | "HUNGRY" | "FULL";
   apples: number;
   feedingMinutes: number;
   minutesUntilNextApple: number;
+};
+
+export type HistoryPageView = {
+  items: HistorySessionFields[];
+  nextCursor: string | null;
 };
 
 export type FocusSessionView = {
@@ -76,7 +83,11 @@ async function readError(response: Response): Promise<ApiError> {
   );
 }
 
-async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+// Shared by the typed helpers in lib/api (AGENTS.md §3).
+export async function requestJson<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const response = await fetch(path, {
     ...init,
     headers: {
@@ -86,6 +97,13 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) throw await readError(response);
   return (await response.json()) as T;
+}
+
+export function listSessionHistory(cursor?: string): Promise<HistoryPageView> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  const query = params.size > 0 ? `?${params.toString()}` : "";
+  return requestJson<HistoryPageView>(`/api/sessions${query}`);
 }
 
 export function getActiveSession(): Promise<FocusSessionView | null> {

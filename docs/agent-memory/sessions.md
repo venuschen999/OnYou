@@ -88,3 +88,11 @@ Starting a focus session. PRD v2.9 §§5–7; `AGENTS.md` §8 and §9.
 - **Why:** `OnYou_web_mockups.html` Give up confirmation (US7) uses "the 6 minutes so far"; the mockup does not show the singular or under-a-minute cases.
 - **Applies to:** #17 (`GiveUpDialog`, `giveUpMessage`), #10.
 - **Status:** Decided.
+
+## S12. Logout ends the Active session with the Give up rule
+
+- **Decision:** `POST /api/auth/logout` locks and resolves the account's `ACTIVE` session, then ends it with `decideGiveUp`: before `endTime` it is `ABANDONED` with zero rewards; at or after `endTime`, with the presence deadline strictly later than `endTime`, it is completed with the #15 exactly-once rewards. With no `ACTIVE` session, nothing changes.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 §5.3 says logout abandons the session, and also that a session completes when its presence deadline is later than the scheduled end. After that end the session has already met the completion rule, so taking its rewards away on logout would contradict §5.3. Before the end, logout abandons as the PRD states.
+- **Applies to:** #18 (`logOut`, `sessionService`).
+- **Status:** Decided.

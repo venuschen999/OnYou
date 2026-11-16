@@ -9,6 +9,6 @@ export const testPrisma = createPrismaClient(TEST_DATABASE_URL);
 
 export async function resetTestDatabase(): Promise<void> {
   await testPrisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "DailyFeeding", "FocusSession", "Pet", "User" CASCADE',
+    'TRUNCATE TABLE "RateLimitCounter", "PasswordResetToken", "DailyFeeding", "FocusSession", "Pet", "User" CASCADE',
   );
 }

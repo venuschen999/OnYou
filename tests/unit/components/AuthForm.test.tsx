@@ -215,7 +215,7 @@ describe("AuthForm signup (US1, #9)", () => {
 });
 
 describe("AuthForm login (US1, #9)", () => {
-  it("shows Welcome back, Log in, and Create an account, with no Forgot password link", () => {
+  it("shows Welcome back, Log in, Create an account, and Forgot password", () => {
     render(<AuthForm mode="login" />);
 
     expect(
@@ -225,9 +225,10 @@ describe("AuthForm login (US1, #9)", () => {
     expect(
       screen.getByRole("link", { name: "Create an account" }),
     ).toHaveAttribute("href", "/signup");
+    // auth.md A16 (supersedes A8.1): the link arrives with its page in #25.
     expect(
-      screen.queryByRole("link", { name: /forgot password/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Forgot password?" }),
+    ).toHaveAttribute("href", "/forgot-password");
     expect(screen.queryByText("8 to 15 characters")).not.toBeInTheDocument();
   });
 
