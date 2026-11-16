@@ -1,10 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const DOCUMENT_PATH = path.join(process.cwd(), "docs", "openapi.yaml");
 
-const PLANNED_PATHS = [
+const MVP_PATHS = [
   "/api/auth/signup",
   "/api/auth/login",
   "/api/auth/logout",
@@ -17,6 +17,24 @@ const PLANNED_PATHS = [
   "/api/sessions/{id}/complete",
   "/api/sessions/{id}/abandon",
 ] as const;
+
+const SHIPPED_OPERATIONS = [
+  ["/api/auth/signup", "post"],
+  ["/api/auth/login", "post"],
+  ["/api/auth/logout", "post"],
+  ["/api/auth/password-reset/request", "post"],
+  ["/api/auth/password-reset/confirm", "post"],
+  ["/api/pet", "get"],
+  ["/api/pet", "patch"],
+  ["/api/sessions", "get"],
+  ["/api/sessions", "post"],
+  ["/api/sessions/active", "get"],
+  ["/api/sessions/{id}/heartbeat", "post"],
+  ["/api/sessions/{id}/complete", "post"],
+  ["/api/sessions/{id}/abandon", "post"],
+] as const;
+
+const PLANNED_OPERATIONS = [] as const;
 
 function loadOpenApiDocument(): string {
   return readFileSync(DOCUMENT_PATH, "utf8");
@@ -44,8 +62,8 @@ describe("OpenAPI document", () => {
   it("lists the planned auth, pet, and session endpoints", () => {
     const document = loadOpenApiDocument();
 
-    for (const plannedPath of PLANNED_PATHS) {
-      expect(document).toContain(`\n  ${plannedPath}:\n`);
+    for (const mvpPath of MVP_PATHS) {
+      expect(document).toContain(`\n  ${mvpPath}:\n`);
     }
   });
 
@@ -278,4 +296,144 @@ describe("OpenAPI document", () => {
     expect(activeRoute).toContain('$ref: "#/components/schemas/FocusSession"');
     expect(activeRoute).toContain('type: "null"');
   });
+
+  it("marks the routes registered on main as shipped", () => {
+    const document = loadOpenApiDocument();
+
+    for (const [apiPath, method] of SHIPPED_OPERATIONS) {
+      expect(operationBlock(document, apiPath, method)).toContain(
+        "x-implementation: shipped",
+      );
+    }
+    expect(document.match(/x-implementation: shipped/g)).toHaveLength(
+      SHIPPED_OPERATIONS.length,
+    );
+    expect(implementedProductRoutes()).toEqual(
+      SHIPPED_OPERATIONS.map(
+        ([apiPath, method]) => `${method} ${apiPath}`,
+      ).sort(),
+    );
+  });
+
+  it("marks unfinished MVP paths as not implemented", () => {
+    const document = loadOpenApiDocument();
+
+    expect(PLANNED_OPERATIONS).toEqual([]);
+    expect(document).not.toContain("x-implementation: planned");
+    expect(document).not.toContain("Not implemented");
+  });
+
+  it("documents session validation, auth errors, and server errors", () => {
+    const document = loadOpenApiDocument();
+    const start = operationBlock(document, "/api/sessions", "post");
+
+    expect(start).toContain("Choose 15, 25, or 50 minutes.");
+    expect(start).toContain("VALIDATION_ERROR");
+    expect(start).toContain('$ref: "#/components/responses/InternalError"');
+    for (const [apiPath, method] of SHIPPED_OPERATIONS) {
+      expect(operationBlock(document, apiPath, method)).toContain(
+        '$ref: "#/components/responses/InternalError"',
+      );
+    }
+    expect(document).toContain("code: UNAUTHENTICATED");
+    expect(document).toContain("Log in to continue.");
+    expect(document).toContain("code: INTERNAL_ERROR");
+    expect(document).toContain("Something went wrong. Try again.");
+  });
+
+  it("documents completion rewards from the feeding rules", () => {
+    const complete = operationBlock(
+      loadOpenApiDocument(),
+      "/api/sessions/{id}/complete",
+      "post",
+    );
+
+    expect(complete).toContain("earns its duration in coins");
+    expect(complete).toContain("capped at 50");
+    expect(complete).toContain("25 feeding minutes");
+    expect(complete).toContain("at most 2");
+  });
+
+  it("resolves internal references and hides secrets and completion tokens", () => {
+    const document = loadOpenApiDocument();
+    const refs = [...document.matchAll(/\$ref: "(#\/components\/[^"]+)"/g)];
+
+    expect(refs.length).toBeGreaterThan(0);
+    for (const [, ref] of refs) {
+      const name = ref.slice(ref.lastIndexOf("/") + 1);
+      expect(document).toContain(`\n    ${name}:\n`);
+    }
+    const operationIds = [
+      ...document.matchAll(/^ {6}operationId: (\w+)$/gm),
+    ].map((match) => match[1]);
+    expect(new Set(operationIds).size).toBe(operationIds.length);
+    expect(document).not.toContain("X-Session-Token");
+    expect(document).not.toContain("sessionStorage");
+    expect(document).not.toContain("SessionElsewhereNotice");
+    expect(document).not.toContain("JWT_SECRET");
+    expect(document).not.toContain("passwordHash");
+    expect(document).not.toContain("DATABASE_URL");
+  });
 });
+
+function operationBlock(
+  document: string,
+  apiPath: string,
+  method: string,
+): string {
+  const pathSource = pathBlock(document, apiPath);
+  const methodHeader = `\n    ${method}:\n`;
+  const start = pathSource.indexOf(methodHeader);
+  if (start < 0) {
+    throw new Error(`Missing ${method.toUpperCase()} ${apiPath}`);
+  }
+  const after = pathSource.slice(start + 1);
+  const nextMethod = after.search(/\n    (?:get|post|patch|put|delete):\n/);
+  return nextMethod < 0 ? after : after.slice(0, nextMethod + 1);
+}
+
+function pathBlock(document: string, apiPath: string): string {
+  const header = `\n  ${apiPath}:\n`;
+  const start = document.indexOf(header);
+  if (start < 0) throw new Error(`Missing path ${apiPath}`);
+  const after = document.slice(start + 1);
+  const nextPath = after.search(/\n  \//);
+  return nextPath < 0 ? after : after.slice(0, nextPath + 1);
+}
+
+function implementedProductRoutes(): string[] {
+  const apiRoot = path.join(process.cwd(), "src", "app", "api");
+  const routes: string[] = [];
+  for (const file of walk(apiRoot)) {
+    if (!file.endsWith(`${path.sep}route.ts`)) continue;
+    if (file.endsWith(`${path.sep}openapi${path.sep}route.ts`)) continue;
+    const relative = path.relative(apiRoot, path.dirname(file));
+    const apiPath = `/${path.posix.join(
+      "api",
+      ...relative
+        .split(path.sep)
+        .map((segment) =>
+          segment.startsWith("[") && segment.endsWith("]")
+            ? `{${segment.slice(1, -1)}}`
+            : segment,
+        ),
+    )}`;
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(
+      /export async function (GET|POST|PATCH|PUT|DELETE)/g,
+    )) {
+      routes.push(`${match[1].toLowerCase()} ${apiPath}`);
+    }
+  }
+  return routes.sort();
+}
+
+function walk(directory: string): string[] {
+  const files: string[] = [];
+  for (const entry of readdirSync(directory)) {
+    const fullPath = path.join(directory, entry);
+    if (statSync(fullPath).isDirectory()) files.push(...walk(fullPath));
+    else files.push(fullPath);
+  }
+  return files;
+}
