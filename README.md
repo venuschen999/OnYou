@@ -27,7 +27,7 @@ Spending coins, shops, pause and resume, custom durations, and social login are 
 
 ### Shipped on `main`
 
-Commit `531ec68` includes the behavior below. Screens are Home, Focus, History, and Settings, plus signup, login, forgot password, and reset password.
+`main` at `b08f70d` includes the behavior below. Screens are Home, Focus, History, and Settings, plus signup, login, forgot password, and reset password. Pull request #70 added integration tests for feeding-day credit. It did not change production behavior.
 
 - Signup, login, and logout. Logout asks for confirmation and then abandons an Active session.
 - Password reset by email through Resend, including the reset screen. Confirming a reset increments `tokenVersion` and signs out existing JWTs.
@@ -38,10 +38,10 @@ Commit `531ec68` includes the behavior below. Screens are Home, Focus, History, 
 
 ### Not finished
 
-- Issue #21 is open. Feeding-day unit tests from issue #11 already derive the day from the session `endTime`. #21's own acceptance criteria are still unchecked, and no pull request closes it.
+- Feeding-day credit uses the session `endTime` in the timezone saved at signup. That rule was already in the domain and completion path. Issue #21 is closed. Pull request #70 (`06a26ca`) added `tests/integration/feedingDayCredit.test.ts` for midnight and late resolution. It did not add production functionality. The issue's acceptance checkboxes were still empty when it was closed.
 - Issue #30 is open. The accessibility and responsive pass across Home, Focus, History, and auth is not done. Earlier screens include labels and a modal focus trap. That does not close #30.
 
-Do not treat those two issues as shipped.
+Do not treat issue #30 as shipped.
 
 ### Technology stack
 
@@ -203,7 +203,7 @@ Leave the Vercel build command at the framework default, or set it to `npm run v
 | [docs/diagrams/architecture.md](docs/diagrams/architecture.md) | Request path from the Next.js UI through JWT auth, services, domain rules, Prisma, and Neon, plus Resend and Vercel |
 | [docs/diagrams/database-schema.md](docs/diagrams/database-schema.md) | Mermaid diagram and column list for the Prisma models |
 | [docs/sprints/sprint-1-retrospective.md](docs/sprints/sprint-1-retrospective.md) | Sprint 1 record written from GitHub. It is not a meeting transcript. |
-| [docs/sprints/sprint-2-retrospective.md](docs/sprints/sprint-2-retrospective.md) | Sprint 2 record written from GitHub. Issues #21 and #30 were still open. |
+| [docs/sprints/sprint-2-retrospective.md](docs/sprints/sprint-2-retrospective.md) | Sprint 2 record written from GitHub. Issue #21 is closed. Issue #30 is still open. |
 | [docs/sprints/contribution-log.md](docs/sprints/contribution-log.md) | Commit, issue, and pull-request summary for CollinsCao and venuschen999. Both partners still need to confirm it. |
 | [docs/demo/demo-script.md](docs/demo/demo-script.md) | 10-minute demonstration plan. No recording is stored in this repository. |
 | [OnYou_PRD_v2_9.md](OnYou_PRD_v2_9.md) | Product requirements |

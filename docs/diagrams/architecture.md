@@ -1,6 +1,6 @@
 # Architecture
 
-This diagram describes the application on `main` at `531ec68`. It follows the dependency direction in [AGENTS.md](../../AGENTS.md) section 3 and the route handlers in `src/app/api`. Issue #28 asked for this file under `docs/`. An architecture image was attached to that issue on 2026-11-16 and was not committed here.
+This diagram describes the application on `main` at `b08f70d`. That commit adds feeding-day integration tests only. The request path is unchanged from the code those tests cover. It follows the dependency direction in [AGENTS.md](../../AGENTS.md) section 3 and the route handlers in `src/app/api`. Issue #28 asked for this file under `docs/`. An architecture image was attached to that issue on 2026-11-16 and was not committed here.
 
 Runtime request path:
 

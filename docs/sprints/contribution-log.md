@@ -1,13 +1,13 @@
 # Contribution log
 
-This log summarizes `main` at `531ec68` (2026-11-15) for **CollinsCao** and **venuschen999**. Counts come from `git log` and the GitHub issue and pull-request APIs. It is not a signed statement by either partner. **Requires confirmation** from both people before it is treated as the submission's contribution log.
+This log summarizes `main` at `b08f70d` for **CollinsCao** and **venuschen999**. Counts come from `git log` and the GitHub issue and pull-request APIs. It is not a signed statement by either partner. **Requires confirmation** from both people before it is treated as the submission's contribution log.
 
 Commit counts are non-merge commits on `main` whose author name matches. They do not include merge commits or Dependabot.
 
 | | CollinsCao | venuschen999 |
 | --- | ---: | ---: |
-| Non-merge commits on `main` | 45 | 54 |
-| Commits whose subject starts with `test` | 17 | 16 |
+| Non-merge commits on `main` | 45 | 55 |
+| Commits whose subject starts with `test` | 17 | 17 |
 | Commits whose subject starts with `feat` | 11 | 10 |
 | Commits whose subject starts with `docs` | 7 | 16 |
 | Commits whose subject starts with `ci`, `chore`, `fix(ci)`, or `fix(deps)` | 9 | 2 |
@@ -82,7 +82,7 @@ Git author on `main`: venuschen999. Planning role in the Scrum setup report: Tea
 
 #1, #3 (with CollinsCao), #5, #6, #8, #9, #10, #11, #17, #18, #19, #21, #24, #25, #28, #30.
 
-#21 and #30 are still open. No pull request is merged for either one.
+#30 is still open. No pull request is merged for it. #21 is closed by pull request #70. That pull request added tests for feeding-day credit that was already implemented. It did not change production code.
 
 ### Implemented features
 
@@ -108,11 +108,13 @@ Git author on `main`: venuschen999. Planning role in the Scrum setup report: Tea
 
 ### Testing
 
-Sixteen `test` commits on `main`, including auth, rewards, pet progress, pet rename, give up, and password reset. PR descriptions for #6, #10, #17, #18, #19, #24, and #25 record a failing run before the implementation commit. PR #60 adds the CI job that runs Playwright against a production build and a throwaway PostgreSQL 16 service.
+Seventeen `test` commits on `main`, including auth, rewards, pet progress, pet rename, give up, and password reset. PR descriptions for #6, #10, #17, #18, #19, #24, and #25 record a failing run before the implementation commit. PR #60 adds the CI job that runs Playwright against a production build and a throwaway PostgreSQL 16 service.
+
+`06a26ca` is the seventeenth `test` commit: `test(rewards): cover feeding day credit across midnight and late resolution (#21)`. It adds `tests/integration/feedingDayCredit.test.ts` only. The pull request records a green first run, so this commit is coverage of existing behavior, not a new feature. The commit trailer names Claude Opus 5.5 as co-author.
 
 ### Documentation
 
-Sixteen `docs` commits on `main`. These include the decision logs under `docs/agent-memory/` that landed with the feature pulls, screenshots under `docs/screenshots/`, and the Homework 3 reports that are already on `main`. Issue #28 was closed with an architecture image on the issue. The diagram files under `docs/diagrams/` were not on `main` at `531ec68`. They are added in the documentation pull request that introduces this log.
+Sixteen `docs` commits on `main`. These include the decision logs under `docs/agent-memory/` that landed with the feature pulls, screenshots under `docs/screenshots/`, and the Homework 3 reports that are already on `main`. Issue #28 was closed with an architecture image on the issue. The diagram files under `docs/diagrams/` were not on `main` at `b08f70d`. They are added in the documentation pull request that introduces this log.
 
 ### CI/CD
 
@@ -143,4 +145,4 @@ Issue #3 is assigned to both accounts. The merged code is PR #54 by CollinsCao. 
 - It does not assign story points. None are stored on the issues.
 - It does not list standups. None were found in GitHub or in the markdown on `main`.
 - It does not include a demo recording or individual reflections. Those were not in the repository.
-- It does not treat #21 or #30 as finished.
+- It does not treat #30 as finished. #21 is closed. Pull request #70 did not add production functionality.

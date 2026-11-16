@@ -2,7 +2,7 @@
 
 This is a plan for a live demonstration of OnYou. **No demo video is stored in this repository, and this file does not claim that one has been recorded.**
 
-Use the production app at https://onyou123.vercel.app or a local server built from `main`. Show only behavior that is merged. Do not demonstrate issue #21 or issue #30 as finished work. #21 is open. #30 is open.
+Use the production app at https://onyou123.vercel.app or a local server built from `main` at `b08f70d`. Show only behavior that is merged. Feeding-day credit by `endTime` is implemented. Pull request #70 added integration tests for that existing rule and did not change production code. Issue #30 is open. Do not present the accessibility pass as finished.
 
 Say the product source is [OnYou_PRD_v2_9.md](../../OnYou_PRD_v2_9.md). Spending coins, shops, pause, custom durations, and social login are out of scope. Do not imply they exist.
 
@@ -38,7 +38,7 @@ Say that OnYou turns a focus block into care for one pet. Every account starts w
 
 Name the stack from the README: Next.js 16, React 19, PostgreSQL 16 on Neon, Prisma 7, a JWT in an HttpOnly cookie, Zod, Vitest, Playwright, and Vercel.
 
-Point at the two open issues so the scope is honest: #21 (midnight and late resolution as its own story) and #30 (the accessibility pass).
+Point at issue #30, the accessibility pass, as the remaining open issue. Say issue #21 is closed because `tests/integration/feedingDayCredit.test.ts` covers midnight and late resolution. Say that file did not add a new product behavior.
 
 ## 1:00–2:00 Authentication
 
@@ -66,7 +66,7 @@ On the prepared account, open Home. Show the pet label (Starving, Hungry, or Ful
 
 Say a completed session adds its duration in coins. Feeding minutes add the duration, capped at 50 for that feeding day. One apple is 25 minutes, and the day stops at 2 apples. An abandoned session adds nothing. The server computes those numbers. The client does not submit them.
 
-Say the feeding day is the session `endTime` in the timezone saved at signup. The unit tests for that function are in `tests/unit/domain/feedingDay.test.ts`. Issue #21 is still open, so do not describe that issue as accepted.
+Say the feeding day is the session `endTime` in the timezone saved at signup. The unit tests are in `tests/unit/domain/feedingDay.test.ts`. The integration tests added by pull request #70 are in `tests/integration/feedingDayCredit.test.ts`. Issue #21 is closed. Do not say #70 shipped new reward logic.
 
 Open Settings and show the pet name field. Saving a name is shipped (`PATCH /api/pet`). A name over 30 characters is rejected and not truncated. You can skip the save if you want to keep the prepared pet named Mochi.
 
@@ -112,6 +112,6 @@ Open [the contribution log](../sprints/contribution-log.md).
 
 Say CollinsCao's merged feature work is the session lifecycle, Focus, the result screen, Home, and History, plus CI, security scanning, OpenAPI, and the deployment pull. venuschen999's merged feature work is the scaffold, schema, auth, rewards, pet rename, Give up, logout, feeding progress, password reset, and the Playwright smoke job.
 
-Say both people still need to confirm the log. Say #21 and #30 are venuschen999's open issues. Say formal GitHub reviews are fewer than the project rules ask for, and point at the review table in the log instead of describing reviews that are not there.
+Say both people still need to confirm the log. Say #30 is venuschen999's remaining open issue. Say #21 is closed by test commit `06a26ca`. Say formal GitHub reviews are fewer than the project rules ask for, and point at the review table in the log instead of describing reviews that are not there. #70 itself has no submitted review.
 
 Stop at 10:00. Do not start a second feature tour.

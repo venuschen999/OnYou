@@ -59,7 +59,7 @@ These are taken from commits and pull requests, not from memory of a conversatio
 
 ## Collaboration observations supported by evidence
 
-- The Scrum setup report says the team confirmed the sprint dates. Both GitHub accounts are assignees. Non-merge commits on `main` at `531ec68`: Collins Cao 45, venuschen999 54.
+- The Scrum setup report says the team confirmed the sprint dates. Both GitHub accounts are assignees. Non-merge commits on `main` at `b08f70d`: Collins Cao 45, venuschen999 55. Venus's added commit is `06a26ca`, integration coverage for feeding-day credit. It does not change Sprint 1 product code.
 - Formal submitted reviews during this work are sparse. CollinsCao approved PR #51 and PR #52 on 2026-11-11. Both review bodies are empty. venuschen999 approved five Dependabot pulls (#42, #43, #45, #47, #48) on 2026-11-11 with the sentence "Reviewed: CI green, change limited to the dependency bump." Those five pulls merged on 2026-11-11, inside the late Sprint 1 window. Venus's reviews of #54 and #58 are dated 2026-11-15 and are listed in the Sprint 2 retrospective because those pulls are the deployment and README issues, and #3 itself closed on 2026-11-15.
 - Collins left a review-style conversation comment on #54 and short "Looks good" comments on #60 and #61. Those are issue comments, not submitted GitHub reviews.
 - The project board is https://github.com/users/CollinsCao/projects/3. The setup report says GitHub rejected a formal link because the project owner is CollinsCao and the repository owner is venuschen999. Whether the board columns were moved for each Sprint 1 issue is not in the repository. **Requires confirmation.**
