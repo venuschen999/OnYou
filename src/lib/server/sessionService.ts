@@ -1,5 +1,6 @@
 import { Prisma, type FocusSession } from "@prisma/client";
 import { getFeedingDay } from "@/lib/domain/feedingDay";
+import { decideGiveUp } from "@/lib/domain/giveUp";
 import { planSessionResolution, presenceDeadline } from "@/lib/domain/presence";
 import {
   calculateRewards,
@@ -453,6 +454,56 @@ async function finishCompletion(
     return { kind: "abandoned" };
   }
   return withPet(tx, await awardCompletion(tx, resolved));
+}
+
+type GiveUpResult = { session: FocusSession; pet?: SessionPetResponse };
+
+async function completedResult(
+  tx: Prisma.TransactionClient,
+  session: FocusSession,
+): Promise<GiveUpResult> {
+  return { session, pet: await readPetSnapshot(tx, session) };
+}
+
+// docs/agent-memory/sessions.md S10: Give up runs the shared resolution first.
+// A final session returns its stored outcome without writing again.
+async function finishGiveUp(
+  tx: Prisma.TransactionClient,
+  session: FocusSession,
+  now: Date,
+): Promise<GiveUpResult> {
+  const resolved = await resolveSession(tx, session, now);
+  if (resolved.status === "COMPLETED") return completedResult(tx, resolved);
+  if (resolved.status === "ABANDONED") return { session: resolved };
+
+  const decision = decideGiveUp({
+    endTime: resolved.endTime,
+    lastHeartbeatAt: resolved.lastHeartbeatAt,
+    now,
+  });
+  if (decision === "ABANDON") {
+    return { session: await abandonActive(tx, resolved) };
+  }
+  // The row lock from loadOwnedSession means this update cannot lose a race.
+  const stored = await awardCompletion(tx, resolved);
+  if (stored.kind === "completed") return completedResult(tx, stored.session);
+  return {
+    session: await tx.focusSession.findUniqueOrThrow({
+      where: { id: resolved.id },
+    }),
+  };
+}
+
+export async function abandonSession(
+  userId: string,
+  sessionId: string,
+  now: Date,
+): Promise<SessionResponse> {
+  const result = await prisma.$transaction(async (tx) => {
+    const session = await loadOwnedSession(tx, userId, sessionId);
+    return finishGiveUp(tx, session, now);
+  });
+  return toPublicSession(result.session, result.pet);
 }
 
 export async function completeSession(

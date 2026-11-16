@@ -14,6 +14,7 @@
     "test": "vitest run --config vitest.config.ts",
     "test:integration": "node scripts/require-test-database-url.mjs && vitest run --config vitest.integration.config.ts",
     "test:coverage": "node scripts/run-coverage.mjs",
+    "test:e2e": "playwright test",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
     "@tailwindcss/turbopack": "^4",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
