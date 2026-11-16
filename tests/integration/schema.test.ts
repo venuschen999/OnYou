@@ -6,7 +6,15 @@ import { buildSession, buildUser } from "../factories";
 import { TEST_DATABASE_URL, resetTestDatabase, testPrisma } from "./testDb";
 import { PRISMA_BIN } from "./testEnv";
 
-const MODEL_TABLES = ["DailyFeeding", "FocusSession", "Pet", "User"];
+// One entry per model in schema.prisma; #24 added the password-reset tables.
+const MODEL_TABLES = [
+  "DailyFeeding",
+  "FocusSession",
+  "PasswordResetToken",
+  "Pet",
+  "RateLimitCounter",
+  "User",
+];
 const UNIQUE_VIOLATION = { code: "P2002" };
 
 type ColumnRow = { table_name: string; column_name: string; data_type: string };

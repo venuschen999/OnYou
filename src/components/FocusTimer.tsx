@@ -1,9 +1,12 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { GiveUpDialog } from "@/components/GiveUpDialog";
 import { PetArt } from "@/components/PetArt";
 import { Button } from "@/components/ui/Button";
 import { useCountdown } from "@/hooks/useCountdown";
 import { formatEndClock } from "@/lib/domain/countdown";
+import { elapsedWholeMinutes } from "@/lib/domain/giveUp";
 import type { FocusSessionView } from "@/lib/api/sessions";
 
 const RING_RADIUS = 112;
@@ -11,14 +14,25 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 type FocusTimerProps = {
   session: FocusSessionView;
+  givingUp: boolean;
+  onGiveUp: () => void;
 };
 
 function displayTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
-export function FocusTimer({ session }: FocusTimerProps) {
+export function FocusTimer({ session, givingUp, onGiveUp }: FocusTimerProps) {
   const countdown = useCountdown(session.endTime);
+  const giveUpRef = useRef<HTMLButtonElement>(null);
+  const [elapsedAtOpen, setElapsedAtOpen] = useState<number | null>(null);
+
+  function openGiveUp(): void {
+    // Display only: the server decides the outcome (US7).
+    setElapsedAtOpen(
+      elapsedWholeMinutes(new Date(session.startTime), new Date()),
+    );
+  }
   const announcement =
     countdown.minutesLeft === 1
       ? "1 minute remaining"
@@ -80,10 +94,23 @@ export function FocusTimer({ session }: FocusTimerProps) {
           This session shows in every OnYou tab you have open. Keep at least one
           open until {endClock}.
         </p>
-        {/* TODO(#17): open the Give up confirmation. The control is part of the running session. */}
-        <Button variant="danger" className="mt-3">
+        <Button
+          ref={giveUpRef}
+          variant="danger"
+          className="mt-3"
+          onClick={openGiveUp}
+        >
           Give up
         </Button>
+        {elapsedAtOpen !== null ? (
+          <GiveUpDialog
+            elapsedMinutes={elapsedAtOpen}
+            busy={givingUp}
+            onConfirm={onGiveUp}
+            onKeepFocusing={() => setElapsedAtOpen(null)}
+            returnFocusRef={giveUpRef}
+          />
+        ) : null}
       </div>
     </div>
   );

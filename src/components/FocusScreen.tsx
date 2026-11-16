@@ -18,8 +18,10 @@ export function FocusScreen() {
     connectionFailed,
     starting,
     completing,
+    givingUp,
     start,
     startAnother,
+    giveUp,
   } = useSession();
   const running = session?.status === "ACTIVE";
   const showResult =
@@ -38,7 +40,7 @@ export function FocusScreen() {
         </p>
       ) : null}
       {phase === "ready" && !completing && running && session ? (
-        <FocusTimer session={session} />
+        <FocusTimer session={session} givingUp={givingUp} onGiveUp={giveUp} />
       ) : null}
       {phase === "ready" && !completing && showResult && session ? (
         <SessionResult session={session} onStartAnother={startAnother} />

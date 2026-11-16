@@ -71,6 +71,11 @@ export async function verifyAuthToken(
   }
 }
 
+// Expires the auth cookie in this browser (password reset, auth.md A15).
+export function buildClearedAuthCookie(): AuthCookie {
+  return { ...buildAuthCookie(""), maxAge: 0 };
+}
+
 export function buildAuthCookie(token: string): AuthCookie {
   // AGENTS.md §12: unreadable by client JavaScript, HTTPS only, sent on top-level navigation.
   return {

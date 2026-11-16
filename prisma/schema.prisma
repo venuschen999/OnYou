@@ -22,17 +22,18 @@ enum SessionStatus {
 }
 
 model User {
-  id           String         @id @default(cuid())
-  email        String         @db.VarChar(254)
+  id           String               @id @default(cuid())
+  email        String               @db.VarChar(254)
   passwordHash String
   // IANA zone captured at signup and kept fixed (PRD v2.9 §6).
   timezone     String
   // Embedded in each JWT; password reset increments it (PRD v2.9 §10).
-  tokenVersion Int            @default(0)
-  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+  tokenVersion Int                  @default(0)
+  createdAt    DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime             @updatedAt @db.Timestamptz(3)
   pet          Pet?
   sessions     FocusSession[]
+  resetTokens  PasswordResetToken[]
 }
 
 model Pet {
@@ -77,4 +78,28 @@ model DailyFeeding {
   pet            Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
 
   @@id([petId, feedingDay])
+}
+
+// Only the SHA-256 of the emailed token is stored; a new request deletes the
+// user's other unused tokens (PRD v2.9 US2, auth.md A12).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique @db.Char(64)
+  expiresAt DateTime  @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Fixed-window request counters in PostgreSQL, because server instances do
+// not share memory (PRD v2.9 §10, auth.md A10).
+model RateLimitCounter {
+  key         String   @db.VarChar(100)
+  windowStart DateTime @db.Timestamptz(3)
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
 }
