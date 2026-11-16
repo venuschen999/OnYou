@@ -1,7 +1,7 @@
 import type { PetProgress } from "@/lib/domain/dashboard";
 
-// Mockup screens for Home. These are test fixtures, not a pet API response.
-// GET /api/pet is issue #19 and is not implemented.
+// Mockup screens for presentational Home tests. The same fields are what
+// GET /api/pet returns (pet.md P4).
 
 export const starvingPet: PetProgress = {
   name: "Mochi",

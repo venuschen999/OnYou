@@ -1,21 +1,16 @@
+import type { PetProgress } from "@/lib/domain/petProgress";
 import {
   APPLE_MINUTES,
   FeedingState,
   minutesUntilNextApple,
-  type FeedingState as FeedingStateName,
 } from "@/lib/domain/rewards";
 
-// Home copy from OnYou_web_mockups.html (US4). Fields match the pet progress
-// issue #19 will return. This module does not fetch them.
+export type { PetProgress };
+
+// Home copy from OnYou_web_mockups.html (US4). The fields are GET /api/pet's
+// PetProgress (pet.md P4). This module does not fetch them.
 // A starving pet that already has minutes uses the "first apple" sentence
 // from the session-result mockup; the dashboard mockup only draws 0 minutes.
-export type PetProgress = {
-  name: string;
-  coins: number;
-  applesToday: number;
-  feedingMinutesTowardNextApple: number;
-  feedingState: FeedingStateName;
-};
 
 export type ActiveFocus = {
   durationMinutes: number;

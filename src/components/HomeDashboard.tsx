@@ -1,40 +1,48 @@
 "use client";
 
-import type { ReactElement } from "react";
-import {
-  DashboardView,
-  type DashboardStatus,
-} from "@/components/DashboardView";
+import { useEffect, useState, type ReactElement } from "react";
+import { DashboardView } from "@/components/DashboardView";
 import { useSession } from "@/components/SessionPresence";
-import type { PetProgress } from "@/lib/domain/dashboard";
+import { getPet, type PetProgressView } from "@/lib/api/pet";
 
-type HomeDashboardProps = {
-  // Tests pass a fixture. The page does not: GET /api/pet is issue #19.
-  pet?: PetProgress | null;
-  status?: DashboardStatus;
-  onRetry?: () => void;
-};
+type PetLoad =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; pet: PetProgressView };
 
-// TODO(#19): load the account pet from GET /api/pet once that endpoint and
-// its response body exist. Do not call a stand-in route.
-function blockedRetry(): void {
-  return undefined;
-}
-
-export function HomeDashboard({
-  pet = null,
-  status = "error",
-  onRetry,
-}: HomeDashboardProps): ReactElement {
+// Home reads the signed-in pet from GET /api/pet (US4, pet.md P4).
+export function HomeDashboard(): ReactElement {
   const { session } = useSession();
+  const [petLoad, setPetLoad] = useState<PetLoad>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+
+  // A response that arrives after unmount or a newer attempt is ignored.
+  useEffect(() => {
+    let isCurrent = true;
+    getPet()
+      .then((pet) => {
+        if (isCurrent) setPetLoad({ status: "ready", pet });
+      })
+      .catch(() => {
+        if (isCurrent) setPetLoad({ status: "error" });
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [attempt]);
+
+  function retry(): void {
+    setPetLoad({ status: "loading" });
+    setAttempt((count) => count + 1);
+  }
+
   const active = session?.status === "ACTIVE" ? session : null;
-  const viewStatus = status === "ready" && !pet ? "error" : status;
   return (
     <DashboardView
-      status={viewStatus}
-      pet={pet}
+      status={petLoad.status}
+      pet={petLoad.status === "ready" ? petLoad.pet : null}
       activeSession={active}
-      onRetry={onRetry ?? blockedRetry}
+      onRetry={retry}
     />
   );
 }
