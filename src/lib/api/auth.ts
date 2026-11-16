@@ -96,3 +96,15 @@ export async function confirmPasswordReset(input: {
     input,
   );
 }
+
+// US1 / auth.md A17: ends the Active session on every device and signs this
+// browser out.
+export async function logOut(): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch("/api/auth/logout", { method: "POST" });
+  } catch {
+    throw new ApiError(NETWORK_STATUS, "NETWORK_ERROR", SERVER_ERROR_MESSAGE);
+  }
+  if (!response.ok) throw await toApiError(response);
+}

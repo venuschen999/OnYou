@@ -15,6 +15,7 @@ import type { HistoryQuery } from "@/lib/validation/history";
 import type { StartSessionInput } from "@/lib/validation/session";
 import { prisma } from "./db";
 import { AppError } from "./errors";
+import { feedingDayDate } from "./feedingDayDate";
 
 const MS_PER_MINUTE = 60_000;
 const UNIQUE_VIOLATION = "P2002";
@@ -284,11 +285,6 @@ function abandonedError(): AppError {
   return new AppError("SESSION_ABANDONED", ABANDONED_MESSAGE);
 }
 
-function feedingDayDate(endTime: Date, timeZone: string): Date {
-  // US6: credit the scheduled end's calendar day, even if resolved later.
-  return new Date(`${getFeedingDay(endTime, timeZone)}T00:00:00.000Z`);
-}
-
 async function lockPet(
   tx: Prisma.TransactionClient,
   userId: string,
@@ -391,7 +387,10 @@ async function awardCompletion(
     where: { id: session.userId },
     select: { timezone: true },
   });
-  const feedingDay = feedingDayDate(session.endTime, user.timezone);
+  // US6: credit the scheduled end's calendar day, even if resolved later.
+  const feedingDay = feedingDayDate(
+    getFeedingDay(session.endTime, user.timezone),
+  );
   const feeding = await tx.dailyFeeding.findUnique({
     where: { petId_feedingDay: { petId: pet.id, feedingDay } },
   });
@@ -416,7 +415,9 @@ async function readPetSnapshot(
     where: { id: session.userId },
     select: { timezone: true },
   });
-  const feedingDay = feedingDayDate(session.endTime, user.timezone);
+  const feedingDay = feedingDayDate(
+    getFeedingDay(session.endTime, user.timezone),
+  );
   const feeding = await tx.dailyFeeding.findUnique({
     where: { petId_feedingDay: { petId: pet.id, feedingDay } },
   });
@@ -507,6 +508,25 @@ export async function abandonSession(
     return finishGiveUp(tx, session, now);
   });
   return toPublicSession(result.session, result.pet);
+}
+
+// sessions.md S12: logout ends the Active session with the Give up rule.
+// Locks the row first, like every other session operation.
+export async function endActiveSessionOnLogout(
+  userId: string,
+  now: Date,
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const active = await tx.focusSession.findFirst({
+      where: { userId, status: "ACTIVE" },
+    });
+    if (!active) return;
+    await lockSession(tx, active.id);
+    const locked = await tx.focusSession.findUniqueOrThrow({
+      where: { id: active.id },
+    });
+    await finishGiveUp(tx, locked, now);
+  });
 }
 
 export async function completeSession(
