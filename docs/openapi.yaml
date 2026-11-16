@@ -241,10 +241,22 @@ paths:
     get:
       tags: [Pet]
       operationId: getPet
-      summary: Get the account pet
+      summary: Get the account pet and today's feeding progress
+      description: >
+        Returns the authenticated account's pet with its coin balance and
+        today's feeding progress. Today is the current calendar date in the
+        timezone saved at signup. Apples and feeding minutes reset at midnight
+        in that timezone; coins never reset. The read has no side effects: it
+        does not resolve or complete a running session.
+      security:
+        - authCookie: []
       responses:
         "200":
           description: The authenticated account's pet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetProgress"
         "401":
           $ref: "#/components/responses/Unauthorized"
     patch:
@@ -705,6 +717,40 @@ components:
           type: integer
           minimum: 0
           maximum: 25
+    PetProgress:
+      type: object
+      description: The pet and today's feeding progress (US4).
+      required:
+        - name
+        - coins
+        - applesToday
+        - feedingMinutesTowardNextApple
+        - feedingState
+      properties:
+        name:
+          type: string
+          example: Mochi
+        coins:
+          type: integer
+          minimum: 0
+          description: Total coins earned. Never resets.
+          example: 385
+        applesToday:
+          type: integer
+          minimum: 0
+          maximum: 2
+          example: 1
+        feedingMinutesTowardNextApple:
+          type: integer
+          minimum: 0
+          maximum: 24
+          description: Leftover feeding minutes today toward the next apple; 0 when Full.
+          example: 10
+        feedingState:
+          type: string
+          enum: [STARVING, HUNGRY, FULL]
+          description: 0 apples is STARVING, 1 is HUNGRY, 2 is FULL.
+          example: HUNGRY
     ErrorResponse:
       type: object
       required: [error]

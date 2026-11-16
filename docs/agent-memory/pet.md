@@ -24,3 +24,11 @@ Default pet creation and naming. PRD v2.9 US3, §7; `AGENTS.md` §7.
 - **Why:** AGENTS §7 says to reuse the mockup's SVG, never substitute art; one port avoids two copies drifting apart.
 - **Applies to:** #9, #17 (slapped), #20.
 - **Status:** Decided.
+
+## P4. Pet progress is a read-only snapshot for today
+
+- **Decision:** `GET /api/pet` returns `{ name, coins, applesToday, feedingMinutesTowardNextApple, feedingState }` for the signed-in owner, the shape `PetProgress` in #20 already uses. "Today" is `getFeedingDay(now, user.timezone)`. With no `DailyFeeding` row for today, apples and feeding minutes are 0, which is the daily reset; coins come from `Pet.coins` and never reset. The read does not resolve or complete a running session, so it has no side effects; a finished session's rewards appear once completion runs.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US4 and §6. Matching #20's existing shape lets the dashboard load the endpoint without a mapping layer. Session resolution stays with the session routes (AGENTS.md §3).
+- **Applies to:** #19 (`GET /api/pet`, `docs/openapi.yaml`), #20.
+- **Status:** Decided.
