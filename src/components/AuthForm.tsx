@@ -97,6 +97,15 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement {
         isInvalid={isCredentialsError}
         describedBy={sharedDescription}
       />
+      {mode === "login" ? (
+        // auth.md A16: the link arrives with its page.
+        <Link
+          href={ROUTES.forgotPassword}
+          className={`${linkClass()} self-start`}
+        >
+          Forgot password?
+        </Link>
+      ) : null}
       {formError && (
         <ErrorMessage id={formErrorId} isAlert>
           {formError.message}

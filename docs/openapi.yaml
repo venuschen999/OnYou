@@ -162,13 +162,58 @@ paths:
       operationId: confirmPasswordReset
       summary: Set a new password
       description: >
-        A successful reset signs the account out everywhere. It does not
-        abandon an Active focus session by itself.
+        Sets a new password from an emailed reset link. In one transaction
+        the server stores the new bcrypt hash, increments tokenVersion so
+        every existing session is signed out, marks the link used, and
+        deletes the account's other unused links. The response also clears
+        this browser's auth cookie. A reset does not abandon an Active focus
+        session by itself; signing out stops heartbeats. A used, expired,
+        unknown, or missing token gets the same RESET_LINK_INVALID error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                token:
+                  type: string
+                  description: The token from the reset link.
+                password:
+                  $ref: "#/components/schemas/Password"
       responses:
         "200":
           description: The password was updated.
+          headers:
+            Set-Cookie:
+              description: Clears the auth cookie (Max-Age=0).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Password updated. Log in with your new password.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: >
+            The password breaks the 8 to 15 character rule (VALIDATION_ERROR),
+            or the link is used, expired, or unknown (RESET_LINK_INVALID).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidLink:
+                  value:
+                    error:
+                      code: RESET_LINK_INVALID
+                      message: This link no longer works.
   /api/pet:
     get:
       tags: [Pet]
@@ -611,6 +656,7 @@ components:
               type: string
               enum:
                 - VALIDATION_ERROR
+                - RESET_LINK_INVALID
                 - EMAIL_IN_USE
                 - INVALID_CREDENTIALS
                 - UNAUTHENTICATED
