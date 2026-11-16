@@ -1,18 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { historyEndNote } from "../src/lib/domain/historyDisplay";
+import { HISTORY_PAGE_SIZE, seedOwnedHistoryPage } from "./historyData";
 import { reachScheduledEnd } from "./scheduledEnd";
 
 // Full-loop browser tests for #26. They wait on Playwright assertions and the
 // server's stored timestamps. They do not sleep, and they never read or write
 // sessionStorage: presence and outcomes are server-decided (AGENTS.md §8).
 // Each test signs up its own account, so session rows cannot leak across tests.
-//
-// History list, empty state, and Load more stay out of this file until the
-// History screen from #23 is on main. /history is still the placeholder.
 
 const VALID_PASSWORD = "loop-pass-26"; // 12 characters, inside the 8–15 rule
 const HEARTBEAT_WAIT_MS = 20_000;
 const SECONDS_PER_MINUTE = 60;
+const HISTORY_ZONE = "America/New_York";
+const HISTORY_NOW = new Date("2026-11-15T20:00:00.000Z");
 
 test("completing a focus session shows coins, feeding minutes, and one apple", async ({
   page,
@@ -94,17 +95,101 @@ test("a second tab shares the countdown and can give the session up", async ({
   await expectAbandoned(page, taskName, 15);
 });
 
+test.describe("history (US8, #26)", () => {
+  test.use({ timezoneId: HISTORY_ZONE });
+
+  test("an empty history shows No sessions yet and Start focusing", async ({
+    page,
+  }) => {
+    await signUp(page);
+    await page.goto("/history");
+
+    await expect(
+      page.getByRole("heading", { name: "No sessions yet" }),
+    ).toBeVisible();
+    const start = page.getByRole("link", { name: "Start focusing" });
+    await expect(start).toHaveAttribute("href", "/focus");
+    await start.click();
+    await expect(page).toHaveURL(/\/focus$/);
+    await expect(
+      page.getByRole("heading", { name: "What are you working on?" }),
+    ).toBeVisible();
+  });
+
+  test("history lists a completed session and a given-up session newest first", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const completedTask = uniqueTask("history-complete");
+    const abandonedTask = uniqueTask("history-give-up");
+    await signUp(page);
+    await startFocus(page, completedTask, 25);
+    await reachScheduledEnd(completedTask);
+    await page.goto("/focus");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Session complete" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Start another session" }).click();
+    await startFocus(page, abandonedTask, 15);
+    await page.getByRole("button", { name: "Give up" }).click();
+    await page
+      .getByRole("dialog", { name: "Give up this session?" })
+      .getByRole("button", { name: "Give up" })
+      .click();
+    await expectAbandoned(page, abandonedTask, 15);
+
+    await page.goto("/history");
+    const rows = page.locator("tbody tr");
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0)).toContainText(abandonedTask);
+    await expect(rows.nth(0)).toContainText("Abandoned");
+    await expect(rows.nth(0)).toContainText("No rewards");
+    await expect(rows.nth(1)).toContainText(completedTask);
+    await expect(rows.nth(1)).toContainText("Completed");
+    await expect(rows.nth(1)).toContainText("+25 coins");
+    await expect(rows.nth(1)).toContainText("+25 feeding min");
+  });
+
+  test("Load more fetches the next history page then the end-of-list note", async ({
+    page,
+  }) => {
+    const email = await signUp(page);
+    const seeded = await seedOwnedHistoryPage(
+      email,
+      `History ${randomUUID()}`,
+      HISTORY_NOW,
+    );
+
+    await page.goto("/history");
+    const rows = page.locator("tbody tr");
+    await expect(rows).toHaveCount(HISTORY_PAGE_SIZE);
+    await expect(page.getByText(seeded.newestTaskName)).toBeVisible();
+    await expect(page.getByText(seeded.oldestTaskName)).toHaveCount(0);
+    await page.getByRole("button", { name: "Load more" }).click();
+
+    await expect(rows).toHaveCount(HISTORY_PAGE_SIZE + 1);
+    await expect(page.getByText(seeded.oldestTaskName)).toBeVisible();
+    await expect(
+      page.getByText(historyEndNote(seeded.oldestStartedAt, HISTORY_ZONE)),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Load more" }),
+    ).toHaveCount(0);
+  });
+});
+
 function uniqueTask(label: string): string {
   return `E2E ${label} ${randomUUID()}`;
 }
 
-async function signUp(page: Page): Promise<void> {
+async function signUp(page: Page): Promise<string> {
   const email = `e2e-${randomUUID()}@example.com`;
   await page.goto("/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(VALID_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
+  return email;
 }
 
 async function startFocus(
