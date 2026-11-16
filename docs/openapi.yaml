@@ -458,26 +458,57 @@ paths:
       operationId: abandonSession
       summary: Give up a focus session
       description: >
-        Any authenticated tab of the owner may give up. Confirming before the
-        scheduled end abandons the session. Confirming after the scheduled end,
-        when presence was met, completes it.
+        Any authenticated tab of the owner may give up after the client shows
+        the Give up confirmation. The server runs presence resolution first.
+        Before the scheduled end the session becomes Abandoned with zero
+        coins, feeding minutes, and apples; rewards already earned are
+        unchanged. At or after the scheduled end, a session with a
+        presence deadline strictly later than the scheduled end is completed with
+        the same exactly-once rewards as POST /complete; otherwise it is
+        Abandoned. A session that is already Completed or Abandoned returns
+        its stored outcome and nothing is written again. A request body is
+        ignored. No completion token is used.
+      security:
+        - authCookie: []
       parameters:
         - $ref: "#/components/parameters/SessionId"
       responses:
         "200":
-          description: The session was resolved.
+          description: >
+            The resolved session. An Abandoned session has zero rewards and no
+            pet. A Completed session (Give up after the scheduled end, or a
+            retry of one) includes the stored rewards and a pet snapshot.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FocusSession"
+                  - type: object
+                    properties:
+                      pet:
+                        $ref: "#/components/schemas/SessionPet"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: The session is already resolved.
+          description: The authenticated account does not own this session.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: FORBIDDEN
+                  message: That session belongs to another account.
+        "404":
+          description: No session exists with this id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: SESSION_NOT_FOUND
+                  message: No session exists with that id.
 components:
   securitySchemes:
     authCookie:

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  abandonSession,
   ApiError,
   completeSession,
   getActiveSession,
@@ -29,8 +30,10 @@ export type SessionController = {
   connectionFailed: boolean;
   starting: boolean;
   completing: boolean;
+  givingUp: boolean;
   start: (input: StartInput) => void;
   startAnother: () => void;
+  giveUp: () => void;
 };
 
 function isCurrent(
@@ -49,6 +52,8 @@ export function useSessionController(): SessionController {
   const [connectionFailed, setConnectionFailed] = useState(false);
   const [starting, setStarting] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [givingUp, setGivingUp] = useState(false);
+  const givingUpRef = useRef(false);
   const epoch = useRef(0);
   const mounted = useRef(true);
   const startingRef = useRef(false);
@@ -313,6 +318,37 @@ export function useSessionController(): SessionController {
     setConnectionFailed(false);
   }, [invalidateCompletion]);
 
+  // US7: any tab may give up. The server returns the final outcome, which may
+  // be Completed after the scheduled end (sessions.md S10).
+  const giveUp = useCallback(() => {
+    if (givingUpRef.current) return;
+    if (!session || session.status !== "ACTIVE") return;
+    givingUpRef.current = true;
+    setGivingUp(true);
+    void sendGiveUp(session.id);
+
+    async function sendGiveUp(sessionId: string): Promise<void> {
+      try {
+        const outcome = await abandonSession(sessionId);
+        if (!mounted.current) return;
+        terminalIdRef.current = outcome.id;
+        clearRetry();
+        setSession((current) =>
+          current?.id === sessionId ? outcome : current,
+        );
+        setErrorMessage(null);
+        setErrorCode(null);
+        setConnectionFailed(false);
+      } catch (error) {
+        if (!mounted.current) return;
+        reportFailure(error);
+      } finally {
+        givingUpRef.current = false;
+        if (mounted.current) setGivingUp(false);
+      }
+    }
+  }, [clearRetry, reportFailure, session]);
+
   const acceptHeartbeat = useCallback((next: FocusSessionView) => {
     if (haltRef.current || terminalIdRef.current === next.id) return;
     if (next.status !== "ACTIVE") {
@@ -335,7 +371,9 @@ export function useSessionController(): SessionController {
     connectionFailed,
     starting,
     completing,
+    givingUp,
     start,
     startAnother,
+    giveUp,
   };
 }

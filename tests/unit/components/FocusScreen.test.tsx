@@ -6,6 +6,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ActiveSessionNotice } from "@/components/ActiveSessionNotice";
@@ -522,5 +523,124 @@ describe("Focus screen restore and heartbeats (US5, #13)", () => {
         .getByRole("link", { name: "Return to session" })
         .getAttribute("href"),
     ).toBe("/focus");
+  });
+});
+
+describe("Give up (US7, #17)", () => {
+  const SIX_MINUTES_IN = new Date(NOW.getTime() + 6 * 60_000);
+  const GIVE_UP_COPY =
+    "Mochi gets nothing from this session, and the 6 minutes so far won\u2019t count. Earlier progress stays safe. This ends the session in every open tab.";
+
+  function requestIndex(part: string): number {
+    return requests.findIndex((entry) => entry.url.includes(part));
+  }
+
+  async function restoreRunning(): Promise<void> {
+    vi.setSystemTime(SIX_MINUTES_IN);
+    renderFocus();
+    await settle(0, jsonResponse(session()));
+  }
+
+  function openDialog(): HTMLElement {
+    fireEvent.click(screen.getByRole("button", { name: "Give up" }));
+    return screen.getByRole("dialog", { name: "Give up this session?" });
+  }
+
+  it("asks for confirmation with the mockup copy, and Keep focusing leaves the timer running", async () => {
+    await restoreRunning();
+
+    const dialog = openDialog();
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(within(dialog).getByText(GIVE_UP_COPY)).toBeTruthy();
+    expect(
+      within(dialog).getByRole("button", { name: "Give up" }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Keep focusing" }),
+    );
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByText("Essay draft: intro")).toBeTruthy();
+    expect(screen.getByText("19:00")).toBeTruthy();
+    expect(requestIndex("/abandon")).toBe(-1);
+  });
+
+  it("moves focus into the dialog, keeps Tab inside it, and closes on Escape", async () => {
+    await restoreRunning();
+    const opener = screen.getByRole("button", { name: "Give up" });
+
+    const dialog = openDialog();
+    const confirm = within(dialog).getByRole("button", { name: "Give up" });
+    const keep = within(dialog).getByRole("button", { name: "Keep focusing" });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    keep.focus();
+    fireEvent.keyDown(keep, { key: "Tab" });
+    expect(document.activeElement).toBe(confirm);
+    fireEvent.keyDown(confirm, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(keep);
+
+    fireEvent.keyDown(keep, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    expect(requestIndex("/abandon")).toBe(-1);
+  });
+
+  it("abandons on confirm and shows the slap with no rewards", async () => {
+    await restoreRunning();
+
+    fireEvent.click(
+      within(openDialog()).getByRole("button", { name: "Give up" }),
+    );
+    const index = requestIndex("/api/sessions/session_1/abandon");
+    expect(index).toBeGreaterThan(-1);
+    expect(requests[index]?.init?.method).toBe("POST");
+
+    await settle(index, jsonResponse(session({ status: "ABANDONED" })));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Session ended early" }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("Mochi got slapped")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "No rewards this time. Apples and coins from earlier sessions are unchanged.",
+      ),
+    ).toBeTruthy();
+    expect(requestIndex("/complete")).toBe(-1);
+  });
+
+  it("shows the rewards when the server completes the session instead", async () => {
+    await restoreRunning();
+
+    fireEvent.click(
+      within(openDialog()).getByRole("button", { name: "Give up" }),
+    );
+    const index = requestIndex("/abandon");
+    await settle(
+      index,
+      jsonResponse({
+        ...session({
+          status: "COMPLETED",
+          coinsEarned: 25,
+          feedingMinutesEarned: 25,
+          applesEarned: 1,
+        }),
+        pet: {
+          name: "Mochi",
+          feedingState: "HUNGRY",
+          apples: 1,
+          feedingMinutes: 25,
+          minutesUntilNextApple: 25,
+        },
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Session complete" }),
+    ).toBeTruthy();
+    // +25 coins and +25 feeding minutes, from the server response.
+    expect(screen.getAllByText("+25", { selector: "b" })).toHaveLength(2);
   });
 });

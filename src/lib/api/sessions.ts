@@ -114,3 +114,10 @@ export function completeSession(sessionId: string): Promise<FocusSessionView> {
     method: "POST",
   });
 }
+
+// US7: Give up. The server may complete instead after the scheduled end.
+export function abandonSession(sessionId: string): Promise<FocusSessionView> {
+  return requestJson<FocusSessionView>(`/api/sessions/${sessionId}/abandon`, {
+    method: "POST",
+  });
+}
