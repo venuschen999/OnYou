@@ -34,6 +34,8 @@ export type SessionController = {
   start: (input: StartInput) => void;
   startAnother: () => void;
   giveUp: () => void;
+  // Drops the session in this tab and stops its heartbeats (logout, #18).
+  forgetSession: () => void;
 };
 
 function isCurrent(
@@ -375,5 +377,6 @@ export function useSessionController(): SessionController {
     start,
     startAnother,
     giveUp,
+    forgetSession: startAnother,
   };
 }
