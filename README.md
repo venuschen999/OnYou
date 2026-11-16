@@ -25,7 +25,23 @@ Students use OnYou for self-directed study or work. Completing a focus session f
 
 Spending coins, shops, pause and resume, custom durations, and social login are out of scope.
 
-The list above is the MVP in the PRD. This revision of `main` implements signup, login, focus sessions (start, heartbeat, completion, and rewards), and the result screen. Home, History, and Settings are placeholders. Password reset, logout, pet renaming, Give up, and history listing are still to be built.
+### Shipped on `main`
+
+Commit `531ec68` includes the behavior below. Screens are Home, Focus, History, and Settings, plus signup, login, forgot password, and reset password.
+
+- Signup, login, and logout. Logout asks for confirmation and then abandons an Active session.
+- Password reset by email through Resend, including the reset screen. Confirming a reset increments `tokenVersion` and signs out existing JWTs.
+- A default pet named Mochi, created with the account, and rename from Settings.
+- Focus sessions of 15, 25, or 50 minutes, one Active session per account, heartbeats, completion, the result screen, and Give up.
+- Coins and feeding rewards applied once on the server. Home shows Starving, Hungry, or Full from `GET /api/pet`.
+- Paginated session history with an empty state and Load more.
+
+### Not finished
+
+- Issue #21 is open. Feeding-day unit tests from issue #11 already derive the day from the session `endTime`. #21's own acceptance criteria are still unchecked, and no pull request closes it.
+- Issue #30 is open. The accessibility and responsive pass across Home, Focus, History, and auth is not done. Earlier screens include labels and a modal focus trap. That does not close #30.
+
+Do not treat those two issues as shipped.
 
 ### Technology stack
 
@@ -183,7 +199,13 @@ Leave the Vercel build command at the framework default, or set it to `npm run v
 
 | Document | What it is |
 | --- | --- |
-| [AGENTS.md](AGENTS.md#3-architecture) | Engineering rules, architecture, and workflow. Folder layout and dependency direction are in that section. The repository does not include a separate diagram file. |
+| [AGENTS.md](AGENTS.md#3-architecture) | Engineering rules, architecture, and workflow. Folder layout and dependency direction are in that section. |
+| [docs/diagrams/architecture.md](docs/diagrams/architecture.md) | Request path from the Next.js UI through JWT auth, services, domain rules, Prisma, and Neon, plus Resend and Vercel |
+| [docs/diagrams/database-schema.md](docs/diagrams/database-schema.md) | Mermaid diagram and column list for the Prisma models |
+| [docs/sprints/sprint-1-retrospective.md](docs/sprints/sprint-1-retrospective.md) | Sprint 1 record written from GitHub. It is not a meeting transcript. |
+| [docs/sprints/sprint-2-retrospective.md](docs/sprints/sprint-2-retrospective.md) | Sprint 2 record written from GitHub. Issues #21 and #30 were still open. |
+| [docs/sprints/contribution-log.md](docs/sprints/contribution-log.md) | Commit, issue, and pull-request summary for CollinsCao and venuschen999. Both partners still need to confirm it. |
+| [docs/demo/demo-script.md](docs/demo/demo-script.md) | 10-minute demonstration plan. No recording is stored in this repository. |
 | [OnYou_PRD_v2_9.md](OnYou_PRD_v2_9.md) | Product requirements |
 | [OnYou_web_mockups.html](OnYou_web_mockups.html) | Screen layout, copy, and pet art |
 | [docs/openapi.yaml](docs/openapi.yaml) | OpenAPI 3.1 specification. Swagger UI is served at `/docs` |
