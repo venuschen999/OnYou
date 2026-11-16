@@ -104,3 +104,21 @@ body {
     animation: none;
   }
 }
+
+@keyframes dashboard-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.dashboard-skeleton {
+  background: var(--tint);
+  border-radius: 10px;
+  animation: dashboard-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-skeleton {
+    animation: none;
+  }
+}
