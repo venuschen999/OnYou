@@ -478,10 +478,16 @@ describe("Focus completion (US6, #16)", () => {
     ).toBeNull();
   });
 
-  it("keeps a confirmed result across navigation away and back", async () => {
+  // #76 (product decision by Partner A, sessions.md S13): once the result has
+  // been shown, leaving Focus clears it, so coming back starts a new session.
+  // The check that completion is never requested again stays.
+  it("starts at setup after leaving a confirmed result, without completing again", async () => {
     const view = await showActive();
     await reachEnd();
     await settle(completeIndexes()[0]!, jsonResponse(completedBody()));
+    expect(
+      screen.getByRole("heading", { name: "Session complete" }),
+    ).toBeTruthy();
 
     view.rerender(
       <SessionPresence>
@@ -499,8 +505,11 @@ describe("Focus completion (US6, #16)", () => {
       </SessionPresence>,
     );
     expect(
-      screen.getByRole("heading", { name: "Session complete" }),
+      screen.getByRole("heading", { name: "What are you working on?" }),
     ).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { name: "Session complete" }),
+    ).toBeNull();
     expect(completeIndexes()).toHaveLength(1);
   });
 
