@@ -118,6 +118,33 @@ describe("OpenAPI document", () => {
     expect(errorCodes).toContain("SESSION_ABANDONED");
   });
 
+  it("documents GET /api/pet as today's feeding progress (#19)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/pet:");
+    const end = document.indexOf("    patch:", start);
+    const getPet = document.slice(start, end);
+    const schemaStart = document.indexOf("    PetProgress:");
+    const schema = document.slice(schemaStart, schemaStart + 1500);
+
+    expect(getPet).toContain("operationId: getPet");
+    expect(getPet).toContain("authCookie");
+    expect(getPet).toContain('$ref: "#/components/schemas/PetProgress"');
+    expect(getPet).toContain("timezone");
+    expect(schemaStart).toBeGreaterThan(-1);
+    for (const field of [
+      "name",
+      "coins",
+      "applesToday",
+      "feedingMinutesTowardNextApple",
+      "feedingState",
+    ]) {
+      expect(schema).toContain(`${field}:`);
+    }
+    expect(schema).toContain("STARVING");
+    expect(schema).toContain("HUNGRY");
+    expect(schema).toContain("FULL");
+  });
+
   it("documents GET /api/sessions history pages (US8, #22)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions:\n");
@@ -144,6 +171,82 @@ describe("OpenAPI document", () => {
     expect(schema).not.toMatch(/outcome:[\s\S]*ACTIVE/);
     expect(document).toContain("nextCursor");
     expect(document).toContain("default: 20");
+  });
+
+  it("documents the password reset request as uniform and rate limited (#24)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/password-reset/request:");
+    const end = document.indexOf("  /api/auth/password-reset/confirm:");
+    const resetRequest = document.slice(start, end);
+    const tooMany = document.slice(document.indexOf("    TooManyRequests:"));
+
+    expect(resetRequest).toContain("operationId: requestPasswordReset");
+    expect(resetRequest).toContain("requestBody:");
+    expect(resetRequest).toContain("email");
+    expect(resetRequest).toContain(
+      "If an account exists for that email, a reset link is on its way.",
+    );
+    expect(resetRequest).toContain("30 minutes");
+    expect(resetRequest).toContain("Resend");
+    expect(resetRequest).toContain('"429"');
+    expect(tooMany).toContain("TOO_MANY_REQUESTS");
+    expect(tooMany).toContain(
+      "Too many reset requests. Wait a few minutes, then try again.",
+    );
+  });
+
+  it("documents the password reset confirm as one transaction that signs out (#25)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/password-reset/confirm:");
+    const end = document.indexOf("\n  /api/", start + 10);
+    const confirm = document.slice(start, end);
+
+    expect(confirm).toContain("operationId: confirmPasswordReset");
+    expect(confirm).toContain("requestBody:");
+    expect(confirm).toContain("token");
+    expect(confirm).toContain("password");
+    expect(confirm).toContain("RESET_LINK_INVALID");
+    expect(confirm).toContain("This link no longer works.");
+    expect(confirm).toContain("tokenVersion");
+    expect(confirm).toContain(
+      "Password updated. Log in with your new password.",
+    );
+    expect(confirm).toContain("does not abandon");
+  });
+
+  it("documents POST /api/sessions/{id}/abandon as Give up with a stored outcome (#17)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions/{id}/abandon:");
+    const end = document.indexOf("components:", start);
+    const abandon = document.slice(start, end);
+
+    expect(abandon).toContain("operationId: abandonSession");
+    expect(abandon).toContain("authCookie");
+    expect(abandon).toContain('$ref: "#/components/schemas/FocusSession"');
+    expect(abandon).toContain("SessionPet");
+    expect(abandon).toContain("stored outcome");
+    expect(abandon).toContain("presence deadline");
+    expect(abandon).toContain("SESSION_NOT_FOUND");
+    expect(abandon).toContain("FORBIDDEN");
+    // sessions.md S10: a final session is 200 with its stored outcome.
+    expect(abandon).not.toMatch(/"409"/);
+    expect(abandon).not.toContain("X-Session-Token");
+    expect(abandon).not.toContain("sessionStorage");
+  });
+
+  it("documents logout as ending the Active session and clearing the cookie (#18)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/auth/logout:");
+    const end = document.indexOf("\n  /api/", start + 10);
+    const logoutRoute = document.slice(start, end);
+
+    expect(logoutRoute).toContain("operationId: logout");
+    expect(logoutRoute).toContain("authCookie");
+    expect(logoutRoute).toContain("Logged out.");
+    expect(logoutRoute).toContain("Max-Age=0");
+    expect(logoutRoute).toContain("abandons");
+    expect(logoutRoute).toContain("presence deadline");
+    expect(logoutRoute).not.toContain("sessionStorage");
   });
 
   it("documents GET /api/sessions/active as the session or null (#13)", () => {

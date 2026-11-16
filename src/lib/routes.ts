@@ -6,6 +6,10 @@ export const ROUTES = {
   settings: "/settings",
   login: "/login",
   signup: "/signup",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
+  // auth.md A15: login shows "Password updated" after a reset.
+  loginAfterReset: "/login?reset=done",
 } as const;
 
 // Routes behind login. src/proxy.ts repeats these in `config.matcher`, which

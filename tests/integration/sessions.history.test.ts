@@ -8,7 +8,11 @@ import {
   vi,
 } from "vitest";
 import { POST as signup } from "@/app/api/auth/signup/route";
-import { GET as listSessions } from "@/app/api/sessions/route";
+import { POST as abandonSession } from "@/app/api/sessions/[id]/abandon/route";
+import {
+  GET as listSessions,
+  POST as startSession,
+} from "@/app/api/sessions/route";
 import { HISTORY_PAGE_SIZE } from "@/lib/domain/history";
 import { AUTH_COOKIE_NAME } from "@/lib/server/authToken";
 import { buildSession } from "../factories";
@@ -130,6 +134,57 @@ describe("GET /api/sessions (US8, #22)", () => {
     await expect(response.json()).resolves.toEqual({
       error: { code: "UNAUTHENTICATED", message: "Log in to continue." },
     });
+  });
+
+  it("lists a session given up before the scheduled end with zero rewards", async () => {
+    const owner = await signUp("jo@school.edu");
+    const started = await startSession(
+      new Request("http://localhost/api/sessions", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${AUTH_COOKIE_NAME}=${owner.token}`,
+        },
+        body: JSON.stringify({
+          taskName: "Essay draft: intro",
+          durationMinutes: 25,
+        }),
+      }),
+    );
+    expect(started.status).toBe(201);
+    const created = (await started.json()) as { id: string; endTime: string };
+    expect(new Date(created.endTime).getTime()).toBeGreaterThan(NOW.getTime());
+
+    const abandoned = await abandonSession(
+      new Request(`http://localhost/api/sessions/${created.id}/abandon`, {
+        method: "POST",
+        headers: { cookie: `${AUTH_COOKIE_NAME}=${owner.token}` },
+      }),
+      { params: Promise.resolve({ id: created.id }) },
+    );
+    expect(abandoned.status).toBe(200);
+    await expect(abandoned.json()).resolves.toMatchObject({
+      id: created.id,
+      status: "ABANDONED",
+      coinsEarned: 0,
+      feedingMinutesEarned: 0,
+    });
+
+    const page = await readPage(
+      await listSessions(historyRequest(owner.token)),
+    );
+
+    expect(page.items).toEqual([
+      expect.objectContaining({
+        id: created.id,
+        taskName: "Essay draft: intro",
+        outcome: "ABANDONED",
+        coinsEarned: 0,
+        feedingMinutesEarned: 0,
+        durationMinutes: 25,
+      }),
+    ]);
+    expect(page.nextCursor).toBeNull();
   });
 
   it("returns an empty page when the account has no final sessions", async () => {
