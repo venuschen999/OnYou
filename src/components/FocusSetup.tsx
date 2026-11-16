@@ -1,12 +1,14 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DurationPicker } from "@/components/DurationPicker";
 import { PetArt } from "@/components/PetArt";
 import type { StartInput } from "@/hooks/useSessionController";
+import { getPet } from "@/lib/api/pet";
+import { rewardSummary, type TodayFeeding } from "@/lib/domain/durationPreview";
 import {
   DURATIONS,
   startSessionSchema,
@@ -15,6 +17,31 @@ import {
 
 const KEEP_OPEN =
   "Keep at least one OnYou tab open until the timer ends. Switching tabs or apps is fine. If no OnYou tab is connected for 30 seconds, the session ends without rewards.";
+
+// Shown in the summary until the pet's name loads, or if it cannot (#72).
+const UNKNOWN_PET_NAME = "Your pet";
+
+type PetToday = TodayFeeding & { name: string };
+
+// Today's pet progress for the reward hints. State changes only in the
+// request callbacks; a late response after unmount is ignored.
+function usePetToday(): PetToday | null {
+  const [pet, setPet] = useState<PetToday | null>(null);
+  useEffect(() => {
+    let isCurrent = true;
+    getPet()
+      .then((progress) => {
+        if (isCurrent) setPet(progress);
+      })
+      .catch(() => {
+        // Coins and the summary still show without today's progress.
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+  return pet;
+}
 
 type FocusSetupProps = {
   starting: boolean;
@@ -37,6 +64,11 @@ export function FocusSetup({ starting, onStart }: FocusSetupProps) {
     DURATIONS[1],
   );
   const error = taskError(taskName, durationMinutes);
+  const pet = usePetToday();
+  const summary = rewardSummary(
+    pet?.name ?? UNKNOWN_PET_NAME,
+    pet?.applesToday ?? 0,
+  );
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -58,7 +90,14 @@ export function FocusSetup({ starting, onStart }: FocusSetupProps) {
           error={error}
           onChange={(event) => setTaskName(event.target.value)}
         />
-        <DurationPicker value={durationMinutes} onChange={setDurationMinutes} />
+        <DurationPicker
+          value={durationMinutes}
+          onChange={setDurationMinutes}
+          today={pet}
+        />
+        <p className="m-0 rounded-[14px] border border-line bg-surface px-3.5 py-3 text-sm">
+          <strong>{summary.lead}</strong> <span>{summary.detail}</span>
+        </p>
         <p className="m-0 max-w-prose text-muted">{KEEP_OPEN}</p>
         <div>
           <Button type="submit" disabled={Boolean(error) || starting}>
