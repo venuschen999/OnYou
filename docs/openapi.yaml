@@ -109,11 +109,34 @@ paths:
       operationId: logout
       summary: Log out
       description: >
-        Signing out stops heartbeats. Logging out during an Active session
-        abandons that session on every device.
+        Signs this browser out and ends the account's Active session on every
+        device. The server locks and resolves the session first. Before the
+        scheduled end, logout abandons it with zero coins, feeding minutes,
+        and apples; rewards already earned are unchanged. At or after the
+        scheduled end, a session with a presence deadline strictly later than
+        the scheduled end is completed with its exactly-once rewards instead.
+        Other devices stay signed in, and their next heartbeat returns the
+        ended session. No focus-session token is read or cleared.
+      security:
+        - authCookie: []
       responses:
         "200":
-          description: The account is logged out.
+          description: Logged out.
+          headers:
+            Set-Cookie:
+              description: Clears the auth cookie (Max-Age=0).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Logged out.
         "401":
           $ref: "#/components/responses/Unauthorized"
   /api/auth/password-reset/request:

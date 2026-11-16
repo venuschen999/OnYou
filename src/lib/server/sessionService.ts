@@ -510,6 +510,25 @@ export async function abandonSession(
   return toPublicSession(result.session, result.pet);
 }
 
+// sessions.md S12: logout ends the Active session with the Give up rule.
+// Locks the row first, like every other session operation.
+export async function endActiveSessionOnLogout(
+  userId: string,
+  now: Date,
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const active = await tx.focusSession.findFirst({
+      where: { userId, status: "ACTIVE" },
+    });
+    if (!active) return;
+    await lockSession(tx, active.id);
+    const locked = await tx.focusSession.findUniqueOrThrow({
+      where: { id: active.id },
+    });
+    await finishGiveUp(tx, locked, now);
+  });
+}
+
 export async function completeSession(
   userId: string,
   sessionId: string,
