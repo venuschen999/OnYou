@@ -24,6 +24,8 @@ type PetNameFormProps = {
 const HINT = "Up to 30 characters. Leave blank to use Mochi.";
 
 // Mockup Settings "Pet name" with its error and "Name saved" states (US3).
+// The saved note uses pine like the mockup .ok; leaf green is too light for
+// text (#30).
 export function PetNameForm({
   initialName,
   onSaved,
@@ -91,7 +93,10 @@ export function PetNameForm({
           error={fieldError}
         />
         {savedName ? (
-          <p role="status" className="m-0 mt-1.5 text-sm text-success">
+          <p
+            role="status"
+            className="m-0 mt-1.5 text-sm font-semibold text-primary"
+          >
             Name saved. Your pet is now {savedName}.
           </p>
         ) : null}
