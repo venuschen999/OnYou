@@ -4,11 +4,13 @@ const RESEND_EMAILS_URL = "https://api.resend.com/emails";
 const RESET_PATH = "/reset-password";
 const SUBJECT = "Reset your OnYou password";
 
+// Accepts process.env as-is, like migrationDatabaseUrl (#3).
 export type ResetEmailEnv = {
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
   APP_URL?: string;
   VERCEL_URL?: string;
+  [name: string]: string | undefined;
 };
 
 // auth.md A13: a configured base, never the request Host header.
