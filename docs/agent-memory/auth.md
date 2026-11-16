@@ -68,7 +68,7 @@ Decided 2026-11-03 by Partner A (`venuschen999`) while planning #9. All are **De
 - **A8.4 Logout is not in #9.** No logout endpoint or button until #18. *Why:* stay in scope.
 - **A8.5 Validate on submit.** Forms validate with the shared Zod schemas when submitted, show every field error at once, and clear a field's error when that field is edited.
 - **A8.6 Loading and error copy** (not in the mockup): submit buttons read "Creating account…" / "Logging in…", are disabled, and show a spinner while waiting. Network or 5xx failures show "Something went wrong. Try again."
-- **A8.7 Redirect is tested at the server level first.** Integration tests cover the proxy and server auth helper; a Playwright test is added with #6 (`TODO(#6)`).
+- **A8.7 Redirect is tested at the server level first.** Integration tests cover the proxy and server auth helper; the Playwright smoke test in `e2e/smoke.spec.ts` (#6) checks that a signed-out browser opening `/dashboard` lands on `/login`.
 
 ## A9. Two-layer route protection
 

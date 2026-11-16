@@ -140,6 +140,26 @@ describe("OpenAPI document", () => {
     );
   });
 
+  it("documents POST /api/sessions/{id}/abandon as Give up with a stored outcome (#17)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/sessions/{id}/abandon:");
+    const end = document.indexOf("components:", start);
+    const abandon = document.slice(start, end);
+
+    expect(abandon).toContain("operationId: abandonSession");
+    expect(abandon).toContain("authCookie");
+    expect(abandon).toContain('$ref: "#/components/schemas/FocusSession"');
+    expect(abandon).toContain("SessionPet");
+    expect(abandon).toContain("stored outcome");
+    expect(abandon).toContain("presence deadline");
+    expect(abandon).toContain("SESSION_NOT_FOUND");
+    expect(abandon).toContain("FORBIDDEN");
+    // sessions.md S10: a final session is 200 with its stored outcome.
+    expect(abandon).not.toMatch(/"409"/);
+    expect(abandon).not.toContain("X-Session-Token");
+    expect(abandon).not.toContain("sessionStorage");
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
