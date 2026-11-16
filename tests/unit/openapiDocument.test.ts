@@ -25,6 +25,7 @@ const SHIPPED_OPERATIONS = [
   ["/api/auth/password-reset/request", "post"],
   ["/api/auth/password-reset/confirm", "post"],
   ["/api/pet", "get"],
+  ["/api/pet", "patch"],
   ["/api/sessions", "get"],
   ["/api/sessions", "post"],
   ["/api/sessions/active", "get"],
@@ -33,7 +34,7 @@ const SHIPPED_OPERATIONS = [
   ["/api/sessions/{id}/abandon", "post"],
 ] as const;
 
-const PLANNED_OPERATIONS = [["/api/pet", "patch", "#10"]] as const;
+const PLANNED_OPERATIONS = [] as const;
 
 function loadOpenApiDocument(): string {
   return readFileSync(DOCUMENT_PATH, "utf8");
@@ -266,6 +267,24 @@ describe("OpenAPI document", () => {
     expect(logoutRoute).not.toContain("sessionStorage");
   });
 
+  it("documents PATCH /api/pet as a trimmed rename that returns progress (#10)", () => {
+    const document = loadOpenApiDocument();
+    const start = document.indexOf("  /api/pet:");
+    const patchStart = document.indexOf("    patch:", start);
+    const end = document.indexOf("\n  /api/", patchStart);
+    const patchPet = document.slice(patchStart, end);
+
+    expect(patchPet).toContain("operationId: updatePet");
+    expect(patchPet).toContain("authCookie");
+    expect(patchPet).toContain("requestBody:");
+    expect(patchPet).toContain("maxLength: 30");
+    expect(patchPet).toContain("Mochi");
+    expect(patchPet).toContain('$ref: "#/components/schemas/PetProgress"');
+    expect(patchPet).toContain(
+      "Pet names can be up to 30 characters. This one has 35.",
+    );
+  });
+
   it("documents GET /api/sessions/active as the session or null (#13)", () => {
     const document = loadOpenApiDocument();
     const start = document.indexOf("  /api/sessions/active:");
@@ -299,14 +318,9 @@ describe("OpenAPI document", () => {
   it("marks unfinished MVP paths as not implemented", () => {
     const document = loadOpenApiDocument();
 
-    for (const [apiPath, method, issue] of PLANNED_OPERATIONS) {
-      const block = operationBlock(document, apiPath, method);
-      expect(block).toContain("x-implementation: planned");
-      expect(block).toContain("Not implemented");
-      expect(block).toContain(issue);
-      expect(block).not.toMatch(/"200":/);
-      expect(block).not.toMatch(/"201":/);
-    }
+    expect(PLANNED_OPERATIONS).toEqual([]);
+    expect(document).not.toContain("x-implementation: planned");
+    expect(document).not.toContain("Not implemented");
   });
 
   it("documents session validation, auth errors, and server errors", () => {

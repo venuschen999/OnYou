@@ -32,3 +32,27 @@ Default pet creation and naming. PRD v2.9 US3, §7; `AGENTS.md` §7.
 - **Why:** PRD v2.9 US4 and §6. Matching #20's existing shape lets the dashboard load the endpoint without a mapping layer. Session resolution stays with the session routes (AGENTS.md §3).
 - **Applies to:** #19 (`GET /api/pet`, `docs/openapi.yaml`), #20.
 - **Status:** Decided.
+
+## P5. Renaming the pet
+
+- **Decision:** `PATCH /api/pet` takes `{ name }` for the signed-in owner. The shared `petNameSchema` trims the name; a blank or spaces-only name becomes `Mochi`; more than 30 characters (counted as characters, so an emoji is one) is `400` `VALIDATION_ERROR` with `fields.name` `Pet names can be up to 30 characters. This one has N.` Nothing is truncated. The response is `200` with the same `PetProgress` body as `GET /api/pet`.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 §7 and US3; the error copy is the mockup's "Pet name too long" state. Returning `PetProgress` lets a screen refresh from the response.
+- **Applies to:** #10.
+- **Status:** Decided.
+
+## P6. Settings Pet section and account email
+
+- **Decision:** Settings shows a Pet section above Account: a `Pet name` field filled with the current name, the hint `Up to 30 characters. Leave blank to use Mochi.`, a `Save name` button, the inline length error, and `Name saved. Your pet is now {name}.` after saving. The Account section shows the signed-in email read-only above Log out (A17). The form is one reusable `PetNameForm` component.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 §9 Settings row and the mockup Settings states.
+- **Applies to:** #10, #20.
+- **Status:** Decided.
+
+## P7. "Name your pet" on Home belongs to the dashboard
+
+- **Decision:** #10 provides `PetNameForm` and the API; the dashboard (#20, PR #59) places it on Home as the optional "Name your pet" field. Suggested rule for #20: show it while the pet is still named `Mochi` and the account has no Completed or Abandoned session; it never blocks Start focusing.
+- **Date / decided by:** 2026-11-15, Partner A (`venuschen999`).
+- **Why:** PRD v2.9 US3 puts the field on a new account's dashboard, which #20 builds; adding it to the placeholder Home here would conflict with #59. The PRD does not define "new account", so the rule above is a suggestion for #20.
+- **Applies to:** #10, #20.
+- **Status:** Decided (placement); rule open for Partner B in #20.

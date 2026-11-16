@@ -11,15 +11,15 @@ info:
     A focus session belongs to the account. Any authenticated tab of the
     owner may heartbeat, give up, or request completion. Protected
     operations require that cookie. There is no focus-session token header.
-    Shipped operations match a registered route. Renaming the pet
-    (`PATCH /api/pet`) waits on issue #10 and is not a shipped contract.
+    Shipped operations match a registered route. There is no unfinished
+    MVP path in this document.
 servers:
   - url: /
 tags:
   - name: Auth
     description: Account access and password reset.
   - name: Pet
-    description: The authenticated account's pet. Rename waits on issue #10.
+    description: The authenticated account's pet.
   - name: Sessions
     description: Account-owned focus sessions.
 paths:
@@ -280,18 +280,50 @@ paths:
       tags: [Pet]
       operationId: updatePet
       summary: Rename the account pet
-      x-implementation: planned
+      x-implementation: shipped
       description: >
-        Not implemented. No route is registered (issue #10). Signup still
-        creates the default pet named Mochi. The rename request and response
-        are documented when issue #10 merges.
+        Renames the authenticated account's pet. The name is trimmed; a blank
+        name restores the default, Mochi. A name over 30 characters (counted
+        as characters) is rejected, never truncated. The response is the same
+        pet progress that GET returns.
       security:
         - authCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 30
+                  description: Trimmed; blank restores Mochi.
+                  example: Biscuit
       responses:
-        "404":
-          description: >
-            Not implemented. The server has no pet rename route, so this
-            method is not found. Missing documentation depends on issue #10.
+        "200":
+          description: The renamed pet and today's feeding progress.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetProgress"
+        "400":
+          description: The name is over 30 characters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error:
+                  code: VALIDATION_ERROR
+                  message: Check the highlighted fields and try again.
+                  fields:
+                    name: Pet names can be up to 30 characters. This one has 35.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /api/sessions:
     get:
       tags: [Sessions]
