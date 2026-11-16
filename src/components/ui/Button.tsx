@@ -1,8 +1,10 @@
-import type { ButtonHTMLAttributes, ReactElement } from "react";
+import type { ButtonHTMLAttributes, ReactElement, Ref } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "danger";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  // React 19 passes ref as a prop; dialogs use it to move focus (AGENTS.md §13).
+  ref?: Ref<HTMLButtonElement>;
   variant?: ButtonVariant;
   isBlock?: boolean;
 };
